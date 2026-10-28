@@ -2,7 +2,7 @@
    before Leaflet and the ~1 MB map data arrive:
    - switches Home / Drone Technology / Team until app.js takes over (window.Pages.ready = true)
    - builds the Drone Technology table. window.DRONES is also used by app.js for planning
-     (it overrides the copy in data/data.js). */
+     (it overrides the copy in data/data.js). swath_m is a planning assumption for drawing spray passes, not a spec-sheet value. */
 (function () {
   "use strict";
   const VIEWS = ["home", "veg", "plan", "drones", "team"];
@@ -15,12 +15,23 @@
   }
   window.addEventListener("hashchange", show);
   show();
+  // shared footer on each reading page
+  const foot = document.getElementById("footTpl");
+  if (foot) document.querySelectorAll(".page .page-inner").forEach((p) => p.after(foot.content.cloneNode(true)));
+  // skip link: focus the visible page (the hash is the page router, so it must not change)
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-skip]")) return;
+    e.preventDefault();
+    const target = document.querySelector(".page:not([hidden]) h1, .float-panel:not([hidden]) .fp-top") || document.getElementById("main");
+    target.setAttribute("tabindex", "-1"); target.focus();
+  });
   window.DRONES = [
     {
       "id": "ares",
       "model": "ARES HYL-150",
       "brand": "Hylio",
       "tank_gal": 13.0,
+      "swath_m": 7.6,
       "prod_ac_hr": 70,
       "rate_note": "@ 2 GPA",
       "battery": "18S 30Ah LiPo, 14 kg",
@@ -38,6 +49,7 @@
       "model": "Agras T40",
       "brand": "DJI",
       "tank_gal": 10.6,
+      "swath_m": 11,
       "prod_ac_hr": 52.6,
       "rate_note": "21.3 ha/h @ 15 L/ha",
       "battery": "30 Ah, 52.22 V, ~12 kg",
@@ -55,6 +67,7 @@
       "model": "PEGASUS HYL-30",
       "brand": "Hylio",
       "tank_gal": 2.5,
+      "swath_m": 4.6,
       "prod_ac_hr": 13,
       "rate_note": "@ 2 gal/ac",
       "battery": "12S 16Ah LiPo, 4.5 kg",
@@ -80,7 +93,8 @@
     ["Productivity", (d) => esc(d.productivity)], ["Battery", (d) => esc(d.battery)], ["Empty weight", (d) => esc(d.empty_weight)],
     ["Obstacle avoidance", (d) => esc(d.avoidance)],
     ["Regulatory status", (d) => '<span class="badge ' + (d.us ? "ok" : "no") + '">' + (d.us ? "U.S. eligible" : "Not available in U.S.") + "</span><br>" + esc(d.compliance)],
-    ["Price", (d) => esc(d.price)]];
+    ["Price", (d) => esc(d.price)],
+    ["Spray swath <small>(planning assumption)</small>", (d) => esc(d.swath_m + " m (" + Math.round(d.swath_m / 0.3048) + " ft)")]];
   const photoCell = (d) => {
     const ph = PHOTO[d.id];
     if (!ph) return "<td></td>";

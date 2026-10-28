@@ -36,3 +36,17 @@ Service: https://services2.arcgis.com/aIrBD8yn1TDTEXoz/arcgis/rest/services/IL_M
 IL_Milepost: 6,222 points. SIGN_LEGEN is the milepost number shown on the sign; ROUTE_NUMB is the IDOT route key
 (e.g. 010_10074_000000 = I-74 in Champaign County).
 IDOT disclaimer: compiled from numerous sources, may not be complete or accurate, not for site-specific use.
+
+## IDOT_Facilities/
+Source: IDOT district facilities ("District Location Maps"), downloaded 2026-10-27.
+Service: https://services2.arcgis.com/aIrBD8yn1TDTEXoz/arcgis/rest/services/IDOT_District_Facilities_View/FeatureServer/0
+IDOT_Maintenance_Yards_Illinois.geojson: 199 points, FAC_TYPE_1 in TEAM SECTION, TEAM SECTION SUB HEADQUARTERS, STORAGE.
+Kept fields: Fac_Name, Fac_Type, FAC_TYPE_1, District, County, Address, City_Zip, FAC_STATUS. The service also lists staff names and
+phone numbers; those fields were not downloaded. gen_data.py uses yards 543 and 544 (Champaign) and E34, E26, 031, 032, E33, E25 (Cook)
+as crew staging areas.
+
+## Census_States/
+Source: U.S. Census Bureau TIGERweb, States layer (generalized with maxAllowableOffset 0.01 deg), downloaded 2026-10-27.
+Service: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/0
+US_States_TIGERweb_generalized.geojson: 50 states + DC (STATE, STUSAB, NAME). tools/gen_us_states.py projects the lower 48 + DC
+(USGS Albers) into data/us_states.js for the member-state map on the Team page.

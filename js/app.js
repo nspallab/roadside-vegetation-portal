@@ -21,7 +21,7 @@
   L.control.scale({ position: "bottomright", imperial: true, metric: false }).addTo(map);
   const wide = () => window.innerWidth > 900;
   const panelMin = () => !!document.querySelector(".float-panel.min:not([hidden])");
-  const rightCardOpen = () => ["planOut", "listCard", "drawer"].some((id) => !$(id).hidden);
+  const rightCardOpen = () => ["planOut", "listCard", "drawer", "recCard"].some((id) => !$(id).hidden);
   const fitPad = () => (wide() ? { paddingTopLeft: [panelMin() ? 20 : 370, panelMin() ? 70 : 20], paddingBottomRight: [rightCardOpen() ? 430 : 60, 20] } : { padding: [10, 10] });
   // Esri basemaps: no API key needed, and they load when the page is opened straight from a file.
   const esri = (path, opts) => L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/" + path + "/MapServer/tile/{z}/{y}/{x}", Object.assign({ maxZoom: 19, maxNativeZoom: 16 }, opts));
@@ -43,6 +43,12 @@
   const depotLayer = L.layerGroup().addTo(map);
   const uploadLayer = L.layerGroup().addTo(map);
   const planLayer = L.layerGroup().addTo(map);
+  // Roadside areas, weed patches and crew coverage paths are drawn on canvas and shown only when zoomed in
+  const canvasA = L.canvas({ padding: 0.3 });
+  map.createPane("patchPane").style.zIndex = 410; // weed patches and coverage paths draw above the roadside strips
+  const canvasP = L.canvas({ padding: 0.3, pane: "patchPane" });
+  const areaLayer = L.layerGroup(), patchLayer = L.layerGroup(), coverLayer = L.layerGroup();
+  const ZOOM_AREA = 16, ZOOM_PATCH = 17, ZOOM_COVER = 16; // a 30 ft strip is about 5 px wide at zoom 16
 
   // Highway network: FHWA HPMS 2024, Champaign County, functional class 1-4 (data/hpms.js)
   const FSYS = { 1: ["Interstate", 3.2, 0.85], 2: ["Freeway / expressway", 2.6, 0.8], 3: ["Principal arterial", 2.2, 0.7], 4: ["Minor arterial", 1.4, 0.6] };
@@ -63,7 +69,7 @@
   const syncMP = () => { if ($("lyrMP").checked && map.getZoom() >= 12) mpLayer.addTo(map); else map.removeLayer(mpLayer); };
   map.on("zoomend", syncMP);
   const addDepotMarker = (d) => L.marker(d.latlng, { icon: L.divIcon({ className: "", html: '<div class="depot-icon' + (d.custom ? " custom" : "") + '">' + d.id + "</div>", iconSize: [26, 26], iconAnchor: [13, 13] }) })
-    .bindTooltip(d.name).addTo(depotLayer);
+    .bindTooltip(esc(d.name) + (d.address ? "<br>" + esc(d.address) + " · IDOT District " + d.district + "<br><small>IDOT district facilities layer</small>" : "")).addTo(depotLayer);
   // Operations Planning shows only the staging areas chosen for the plan; Vegetation Information shows them all
   function renderDepotMarkers() {
     depotLayer.clearLayers();
@@ -122,6 +128,30 @@
       return { action: "mow", why: "Mow to limit seed spread at " + s.stage.toLowerCase() + "; re-treat regrowth" };
     return { action: "spray", why: "Spot spray " + D.herbicides[s.herbicide].name + " at " + s.stage.toLowerCase() };
   }
+  /* Priority 0–100 ranks flagged sites: how far past the limits they are, sight-line risk, traffic exposure and
+     time since the last inspection. Sites with status No action score 0. */
+  const PRI_PARTS = { height: ["Height", 30], cover: ["Weed cover", 30], sight: ["Sight distance", 20], traffic: ["Traffic (AADT)", 10], age: ["Time since inspection", 10] };
+  function priority(s, ev, th) {
+    if (ev.status === "good") return { score: 0, parts: {} };
+    const a = daysSince(s.last_inspected);
+    const f = {
+      height: clamp01(s.height_in / (2 * th.height)),
+      cover: s.herbicide ? clamp01(s.density_pct / (2 * th.density)) : 0,
+      sight: s.sight_concern && th.sight ? (s.height_in >= th.sightH ? 1 : 0.4) : 0,
+      traffic: clamp01((s.roadway.aadt || 0) / 60000),
+      age: clamp01(a / (2 * th.age)),
+    };
+    const parts = Object.fromEntries(Object.entries(f).map(([k, v]) => [k, Math.round(v * PRI_PARTS[k][1])]));
+    return { score: Object.values(parts).reduce((x, y) => x + y, 0), parts };
+  }
+  // Planner overrides from the Recommendations card: site id -> action, or "skip" to leave the site out of the plan
+  const overrides = {};
+  function applyOverride(s, rec) {
+    const o = overrides[s.id];
+    if (!o || !rec) return rec;
+    if (o === "skip") return null;
+    return o === rec.action ? rec : { action: o, why: "Set by planner (recommended: " + ACTION[rec.action].label.toLowerCase() + ")", manual: true };
+  }
   const STATUS = {
     control: { label: "Needs control", v: "--st-control" },
     monitor: { label: "Monitor", v: "--st-monitor" },
@@ -156,6 +186,129 @@
     if (by === "height") return ramp(s.height_in / 60);
     if (by === "density") return s.herbicide ? ramp(s.density_pct / 60) : "#9aa39d";
   }
+
+  /* ---- 3a. Roadside vegetation areas. Each site is a 1-mile line; its area is the ROW strip (D.meta.row_ft wide)
+     centred on that line. Weed patches inside the strip stand in for what drone-image classification will return:
+     their total area matches the site's weed cover, their layout is random but fixed per site (seeded by its id). ---- */
+  const ROW_M = D.meta.row_ft * 0.3048, MOW_DECK_M = 15 * 0.3048;
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  // flat local projection in metres around a point (fine at the scale of one site)
+  function localProj(o) {
+    const kx = 111320 * Math.cos(o[0] * Math.PI / 180), ky = 110540;
+    return { xy: (ll) => [(ll[1] - o[1]) * kx, (ll[0] - o[0]) * ky], ll: (p) => [o[0] + p[1] / ky, o[1] + p[0] / kx] };
+  }
+  // cumulative lengths of a metre polyline, and the point + unit direction at distance d along it
+  const cumLen = (pts) => pts.reduce((a, p, i) => (a.push(i ? a[i - 1] + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0), a), []);
+  function along(pts, cum, d) {
+    d = Math.max(0, Math.min(cum[cum.length - 1], d));
+    let i = 1; while (i < pts.length - 1 && cum[i] < d) i++;
+    const a = pts[i - 1], b = pts[i], L = cum[i] - cum[i - 1] || 1, t = (d - cum[i - 1]) / L;
+    return { p: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], n: [-(b[1] - a[1]) / L, (b[0] - a[0]) / L] }; // n = left normal
+  }
+  // point at distance d along the site line, shifted sideways by off metres (positive = left)
+  const at = (g, d, off) => { const q = along(g.pts, g.cum, d); return g.proj.ll([q.p[0] + q.n[0] * off, q.p[1] + q.n[1] * off]); };
+  const seeded = (str) => { let seed = [...str].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7); return () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296); };
+
+  function siteGeom(s) {
+    const key = s.density_pct + "|" + s.herbicide;
+    if (s._geo && s._geo.key === key) return s._geo;
+    const proj = localProj(s.coords[0]), pts = s.coords.map(proj.xy), cum = cumLen(pts), len = cum[cum.length - 1];
+    const g = { key, proj, pts, cum, len, patches: [] };
+    const steps = Math.max(8, Math.ceil(len / 40));
+    const side = (off) => Array.from({ length: steps + 1 }, (_, i) => at(g, len * i / steps, off));
+    g.strip = side(ROW_M / 2).concat(side(-ROW_M / 2).reverse());
+    if (s.herbicide && s.density_pct > 0) {
+      const rnd = seeded(s.id), A = s.area_ac * 4046.86 * s.density_pct / 100;
+      const n = Math.max(1, Math.min(8, Math.round(s.density_pct / 12) + 1));
+      const share = Array.from({ length: n }, () => 0.6 + 0.8 * rnd()), sum = share.reduce((a, b) => a + b, 0);
+      let P = share.map((w) => { const b = ROW_M / 2 * (0.6 + 0.35 * rnd()); return { b, a: A * w / sum / (Math.PI * b) }; });
+      const total = P.reduce((x, p) => x + 2 * p.a, 0);
+      if (total > 0.9 * len) P = P.map((p) => ({ b: p.b, a: p.a * 0.9 * len / total })); // dense sites: patches nearly merge
+      const gaps = Array.from({ length: n + 1 }, () => rnd()), gs = gaps.reduce((a, b) => a + b, 0), free = len - P.reduce((x, p) => x + 2 * p.a, 0);
+      let d = 0;
+      P.forEach((p, i) => {
+        d += gaps[i] / gs * free;
+        const c = (rnd() * 2 - 1) * (ROW_M / 2 - p.b), mid = d + p.a, k = 14;
+        const half = (sgn) => Array.from({ length: k + 1 }, (_, j) => { const t = -1 + 2 * j / k; return at(g, mid + t * p.a, c + sgn * p.b * Math.sqrt(1 - t * t)); });
+        g.patches.push({ mid, a: p.a, b: p.b, c, ring: half(1).concat(half(-1).reverse()), ac: Math.PI * p.a * p.b / 4046.86 });
+        d += 2 * p.a;
+      });
+    }
+    s._geo = g;
+    return g;
+  }
+  // Coverage paths, as illustrations of how a crew works a site:
+  // spray drone flies back-and-forth passes over each weed patch; mower makes passes the length of the strip; scout flies the centre line.
+  function coverPath(s, action, swath) {
+    const g = siteGeom(s), out = [];
+    if (action === "spray") {
+      g.patches.forEach((p) => {
+        const n = Math.max(1, Math.ceil(2 * p.b / swath));
+        for (let k = 0; k < n; k++) {
+          const off = -p.b + (2 * p.b) * (k + 0.5) / n, half = p.a * Math.sqrt(clamp01(1 - (off / p.b) ** 2)) || p.a * 0.3;
+          const ends = [at(g, p.mid - half, p.c + off), at(g, p.mid + half, p.c + off)];
+          out.push(...(k % 2 ? ends.reverse() : ends));
+        }
+      });
+    } else if (action === "mow") {
+      const n = Math.max(1, Math.ceil(ROW_M / MOW_DECK_M)), steps = Math.max(6, Math.ceil(g.len / 80));
+      for (let k = 0; k < n; k++) {
+        const off = -ROW_M / 2 + ROW_M * (k + 0.5) / n;
+        const line = Array.from({ length: steps + 1 }, (_, i) => at(g, g.len * i / steps, off));
+        out.push(...(k % 2 ? line.reverse() : line));
+      }
+    } else out.push(...s.coords);
+    return out;
+  }
+  const pathLen = (lls) => lls.reduce((a, p, i) => a + (i ? map.distance(lls[i - 1], p) : 0), 0);
+
+  // Drone view: a small satellite map of the site (Esri World Imagery) with its strip and weed patches.
+  // It stands in for the drone orthomosaic until project imagery is loaded. Opens on the largest patch; zoom out for the whole site.
+  let aerialMap = null;
+  function mountAerial(s) {
+    if (aerialMap) { aerialMap.remove(); aerialMap = null; }
+    const el = $("aerialMap"); if (!el) return;
+    const g = siteGeom(s);
+    aerialMap = L.map(el, { zoomControl: true, scrollWheelZoom: false, attributionControl: true, maxZoom: 20 });
+    esri("World_Imagery", { maxNativeZoom: 19, maxZoom: 20, attribution: "Imagery &copy; Esri, Maxar" }).addTo(aerialMap);
+    const strip = L.polygon(g.strip, { color: "#fe6f1a", weight: 2, fillOpacity: 0.08, interactive: false }).addTo(aerialMap);
+    g.patches.forEach((p) => L.polygon(p.ring, { color: "#fff", weight: 1, fillColor: "#ff4040", fillOpacity: 0.5, interactive: false }).addTo(aerialMap));
+    const big = g.patches.slice().sort((a, b) => b.ac - a.ac)[0];
+    const whole = () => aerialMap.fitBounds(strip.getBounds(), { padding: [10, 10] });
+    if (big) aerialMap.fitBounds(L.latLngBounds(big.ring).pad(0.25), { maxZoom: 19 }).setZoom(Math.max(17, aerialMap.getZoom()), { animate: false }); else whole();
+    const Btn = L.Control.extend({ onAdd: () => { const b = L.DomUtil.create("button", "ae-btn"); b.type = "button"; b.textContent = "Whole site"; L.DomEvent.on(b, "click", (e) => { L.DomEvent.stop(e); whole(); }); return b; } });
+    new Btn({ position: "topright" }).addTo(aerialMap);
+  }
+
+  function renderAreas() {
+    areaLayer.clearLayers();
+    const dimAll = state.view === "plan";
+    D.sites.forEach((s) => {
+      const pl = polyById[s.id];
+      const color = pl ? pl.options.color : siteColor(s), op = pl ? pl.options.opacity : 0.9;
+      L.polygon(siteGeom(s).strip, { renderer: canvasA, color, weight: 1, opacity: Math.min(1, op + 0.05), fillColor: color, fillOpacity: dimAll ? 0.1 : 0.22 * op })
+        .bindTooltip(esc(s.route + " " + s.dir + " · " + s.label) + "<br>Roadside area " + fmt(s.area_ac, 2) + " ac (" + D.meta.row_ft + " ft strip)", { sticky: true })
+        .on("click", () => onSiteClick(s)).addTo(areaLayer);
+    });
+  }
+  function renderPatches() {
+    patchLayer.clearLayers();
+    D.sites.forEach((s) => siteGeom(s).patches.forEach((p, i) =>
+      L.polygon(p.ring, { renderer: canvasP, color: "#fff", weight: 1.5, fillColor: VCLASS_COLORS[s.vclass], fillOpacity: 0.9 })
+        .bindTooltip("<b>" + esc(s.species) + "</b> patch " + (i + 1) + " · " + fmt(p.ac, 2) + " ac<br><small>Illustrative detection from drone imagery</small>", { sticky: true })
+        .on("click", () => onSiteClick(s)).addTo(patchLayer)));
+  }
+  const areasShown = () => $("lyrAreas").checked && map.getZoom() >= ZOOM_AREA;
+  let areasWere = false;
+  function syncZoomLayers() {
+    const z = map.getZoom();
+    if (areasShown() !== areasWere) { areasWere = areasShown(); renderSites(); }
+    const show = (lyr, on) => (on ? lyr.addTo(map) : map.removeLayer(lyr));
+    show(areaLayer, $("lyrAreas").checked && z >= ZOOM_AREA);
+    show(patchLayer, $("lyrPatches").checked && z >= ZOOM_PATCH);
+    show(coverLayer, state.view === "plan" && z >= ZOOM_COVER);
+  }
+  map.on("zoomend", syncZoomLayers);
   /* ---- Representative visuals (A1–A8). Same image for every site of a class / stage.
      Files live in img/vegetation/{class,stage}/<slug>.svg; replace with real photos later. ---- */
   const slug = (t) => t.toLowerCase().replace(/\(.*?\)/g, "").trim().replace(/[^a-z0-9]+/g, "-").replace(/-$/, "");
@@ -279,7 +432,9 @@
     const route = $("thRoute").value, dim = $("thDim").checked;
     D.sites.forEach((s) => {
       s._ev = evaluate(s, th);
-      s._rec = recommend(s, s._ev);
+      s._pri = priority(s, s._ev, th);
+      s._auto = recommend(s, s._ev);
+      s._rec = applyOverride(s, s._auto);
       const inRoute = route === "all" || s.route === route;
       let opacity = 0.95, weight = 6;
       if (state.view === "veg") {
@@ -292,6 +447,7 @@
         else if (!sel.filter(s)) opacity = 0.25;
       }
       if (state.selected === s.id) weight = 10;
+      if (areasShown()) weight = state.selected === s.id ? 4 : 2; // thin centre line so the strip shows
       const color = state.view === "plan" && !s._rec ? "#9aa39d" : siteColor(s);
       const pl = L.polyline(s.coords, { color, weight, opacity, lineCap: "butt" });
       // A5: tooltip thumbnail follows the "Color by" mode (built lazily on hover)
@@ -307,6 +463,9 @@
     });
     renderSummary();
     renderActivity();
+    renderAreas();
+    if (state.view === "plan") { renderRecs(); syncPlanReady(); }
+    fillSnapshot();
   }
 
   function renderActivity() {
@@ -330,12 +489,13 @@
     pool.forEach((s) => n[s._ev.status]++);
     $("statusSummary").innerHTML = Object.entries(STATUS).map(([k, v]) =>
       '<button type="button" class="stat" data-st="' + k + '" aria-pressed="' + (k === state.listStatus) + '" style="--c:var(' + v.v + ')"><b>' + n[k] + "</b><span>" + v.label + "</span></button>").join("");
+    // highest priority first
     const list = pool.filter((s) => s._ev.status === state.listStatus)
-      .sort((a, b) => (b.sight_concern - a.sight_concern) || (b.density_pct - a.density_pct) || a.id.localeCompare(b.id));
+      .sort((a, b) => (b._pri.score - a._pri.score) || (b.sight_concern - a.sight_concern) || (b.density_pct - a.density_pct) || a.id.localeCompare(b.id));
     $("listTitle").textContent = STATUS[state.listStatus].label + " · " + list.length + " site" + (list.length === 1 ? "" : "s") + (route === "all" ? "" : " on " + route);
     $("siteList").innerHTML = list.map((s) =>
-      '<li data-id="' + s.id + '" tabindex="0">' + shield(s.route) + '<div><div class="sid">' + esc(s.route + " " + s.dir + " · " + s.label) + "</div><div class=\"why\">" +
-      esc(s._ev.reasons.join(" · ")) + '</div></div><span class="go" aria-hidden="true">›</span></li>').join("") || '<li class="empty">No sites in this group at these limits.</li>';
+      '<li data-id="' + s.id + '" tabindex="0">' + shield(s.route) + '<div><div class="sid">' + esc(s.route + " " + s.dir + " · " + s.label) + (s._updated ? ' <span class="new">updated</span>' : "") + "</div><div class=\"why\">" +
+      esc(s._ev.reasons.join(" · ")) + "</div></div>" + (s._pri.score ? priBadge(s._pri.score) : "") + '<span class="go" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m8 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></li>').join("") || '<li class="empty">No sites in this group at these limits.</li>';
   }
   $("statusSummary").addEventListener("click", (e) => { const t = e.target.closest(".stat"); if (!t) return; state.listStatus = t.dataset.st; renderSummary(); $("siteList").scrollTop = 0; });
   $("siteList").addEventListener("click", (e) => { const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); });
@@ -343,8 +503,13 @@
   function showList() { $("drawer").hidden = true; state.selected = null; $("listCard").hidden = false; renderSites(); }
   $("vizBtn").addEventListener("click", showList);
   $("listClose").addEventListener("click", () => { $("listCard").hidden = true; });
-  $("dBack").addEventListener("click", () => { if (state.view === "veg") showList(); else { $("drawer").hidden = true; state.selected = null; renderSites(); } });
+  $("dBack").addEventListener("click", () => {
+    if (state.view === "veg") showList();
+    else if (!state.plan) showRecs();
+    else { $("drawer").hidden = true; state.selected = null; $("planOut").hidden = false; renderSites(); }
+  });
 
+  const priBadge = (n) => '<span class="pri" title="Priority ' + n + ' of 100" style="--p:' + n + '">' + n + "</span>";
   function shield(ref) {
     const [kind, num] = ref.split("-");
     return '<span class="shield ' + (kind === "I" ? "i" : "us") + '">' + num + "</span>";
@@ -382,9 +547,8 @@
   function openDrawer(s) {
     state.selected = s.id;
     renderSites();
-    $("listCard").hidden = true;
+    $("listCard").hidden = true; $("recCard").hidden = true; $("planOut").hidden = true;
     $("drawer").hidden = false;
-    $("dBack").hidden = state.view !== "veg";
     $("dRoute").innerHTML = shield(s.route) + "<span>" + esc(s.route) + " " + esc(s.dir) + " roadside</span>";
     $("dId").textContent = s.label + " · " + s.id;
     const ev = s._ev, st = STATUS[ev.status], rec = s._rec;
@@ -398,6 +562,17 @@
         '<span class="rep-tag">Representative ' + (rc.photo ? "photo" : "image") + " · not of this site</span>";
     const photoCredit = !s._photo && rc.photo
       ? '<p class="credit-line">' + esc(rc.title) + " · " + esc(rc.credit) + ' · <a href="' + rc.page + '" target="_blank" rel="noopener">View source ↗</a></p>' : "";
+    // Ground photo (uploaded or representative) and the drone view (aerial imagery of this site with its strip and weed patches)
+    const g = siteGeom(s), lastDrone = s.history.filter((e) => /drone/i.test(e.type) && /inspection/i.test(e.type)).pop();
+    const gallery = '<div class="toggle gal-tabs" role="tablist" aria-label="Site images">' +
+      '<label><input type="radio" name="gal" value="ground" checked><span>Ground photo</span></label>' +
+      '<label><input type="radio" name="gal" value="aerial"><span>Drone view</span></label></div>' +
+      '<div class="gal" data-g="ground"><div class="photo" id="dPhoto">' + photo + "</div>" + photoCredit + "</div>" +
+      '<div class="gal" data-g="aerial" hidden><div class="aerial" id="aerialMap" aria-label="Satellite map of site ' + esc(s.id) + '"></div><p class="credit-line">' +
+      (g.patches.length ? g.patches.length + " weed patch" + (g.patches.length > 1 ? "es" : "") + " outlined (" + fmt(g.patches.reduce((a, p) => a + p.ac, 0), 2) + " ac). " : "No weed patches: desirable turf. ") +
+      (lastDrone ? "Last drone survey " + esc(lastDrone.date) + ". " : "") + "Imagery © Esri, Maxar; stands in for the project's drone orthomosaic. Patches are illustrative.</p></div>";
+    const pri = s._pri, priBlock = pri.score ? '<div><h3 class="sec-title">Priority ' + priBadge(pri.score) + '<small class="muted">of 100</small></h3><div class="pri-parts">' +
+      Object.entries(PRI_PARTS).map(([k, [lbl, max]]) => '<span>' + lbl + '</span><i style="--w:' + (100 * (pri.parts[k] || 0) / max) + '%"></i><b>' + (pri.parts[k] || 0) + "/" + max + "</b>").join("") + "</div></div>" : "";
     const th = thresholds();
     const strip = '<div class="rep-strip">' +
       '<figure>' + linked(rs, imgTag(rs, "", s.stage)) + "<figcaption>" + esc(s.stage) + (rs.photo ? " · photo" : "") + "</figcaption></figure>" +
@@ -424,9 +599,9 @@
     $("dBody").innerHTML = big +
       '<div><span class="pill" style="--c:var(' + st.v + ')">' + st.label + "</span>" +
       '<ul class="reasons">' + ev.reasons.map((r) => "<li>" + esc(r) + "</li>").join("") + "</ul>" +
-      (rec ? '<p class="hint" style="margin-top:8px"><i class="dot a-' + rec.action + '"></i> Recommended: <b>' + ACTION[rec.action].label + "</b>. " + esc(rec.why) + ".</p>" : "") + "</div>" +
-      checklist +
-      '<div><div class="photo" id="dPhoto">' + photo + '</div>' + photoCredit + strip + '<label class="btn btn-outline file" style="margin-top:8px;display:inline-block"><input type="file" id="dPhotoIn" accept="image/*">Attach Site Photo</label></div>' +
+      (rec ? '<p class="hint" style="margin-top:8px"><i class="dot a-' + rec.action + '"></i> ' + (rec.manual ? "Planned" : "Recommended") + ": <b>" + ACTION[rec.action].label + "</b>. " + esc(rec.why) + ".</p>" : "") + "</div>" +
+      priBlock + checklist +
+      "<div>" + gallery + strip + '<label class="btn btn-outline file" style="margin-top:8px;display:inline-block"><input type="file" id="dPhotoIn" accept="image/*">Attach Site Photo</label></div>' +
       '<div><h3 class="sec-title">Vegetation</h3><dl class="attrs">' +
       "<dt>Dominant species</dt><dd>" + esc(s.species) + "</dd>" +
       "<dt>Class</dt><dd>" + esc(s.vclass) + "</dd>" +
@@ -441,17 +616,31 @@
       '<div><h3 class="sec-title">Inspection and control history</h3><ol class="timeline">' +
       s.history.slice().reverse().map((e) => {
         const c = CONTROL_TYPES.includes(e.type) ? (e.type === "Mowing" || e.type === "Brush cutting" ? "var(--a-mow)" : "var(--a-spray)") : "var(--a-inspect)";
+        const view = /inspection/i.test(e.type) ? '<button type="button" class="linkish" data-gal="' + (/drone/i.test(e.type) ? "aerial" : "ground") + '">View ' + (/drone/i.test(e.type) ? "drone view" : "photo") + "</button>" : "";
         return '<li style="--c:' + c + '"><time>' + esc(e.date) + "</time><b>" + esc(e.type) + "</b>" + (e.added ? ' <span class="new">added</span>' : "") +
-          "<br>" + esc(e.by) + (e.note ? " · " + esc(e.note) : "") + "</li>";
+          "<br>" + esc(e.by) + (e.note ? " · " + esc(e.note) : "") + (view ? " " + view : "") + "</li>";
       }).join("") + "</ol></div>" +
       '<form class="record-form" id="recForm"><h3 class="sec-title" style="margin:0">Add a record</h3>' +
       '<div class="grid2"><label class="field"><span>Date</span><input type="date" id="rDate" value="' + D.meta.as_of + '" required></label>' +
       '<label class="field"><span>Activity</span><select id="rType">' +
       CONTROL_TYPES.concat(["Drone inspection", "Ground inspection"]).map((t) => "<option>" + t + "</option>").join("") + "</select></label></div>" +
-      '<label class="field"><span>Crew or contractor</span><input type="text" id="rBy" value="IDOT D5 crew"></label>' +
+      '<label class="field"><span>Crew or contractor</span><input type="text" id="rBy" value="' + esc(s.region === "chicago" ? "IDOT D1 crew" : "IDOT D5 crew") + '"></label>' +
       '<label class="field"><span>Notes</span><input type="text" id="rNote" placeholder="Product, rate, area treated"></label>' +
+      '<fieldset class="obs"><legend>New observation <small>(optional, updates the site)</small></legend><div class="grid3">' +
+      '<label class="field"><span>Height (in)</span><input type="number" id="rH" min="0" max="200" placeholder="' + s.height_in + '"></label>' +
+      '<label class="field"><span>Cover (%)</span><input type="number" id="rC" min="0" max="100" placeholder="' + s.density_pct + '"></label>' +
+      '<label class="field"><span>Stage</span><select id="rS"><option value="">' + esc(s.stage) + "</option>" + STAGE_ORDER.filter((x) => x !== s.stage).map((x) => "<option>" + x + "</option>").join("") + "</select></label>" +
+      "</div></fieldset>" +
       '<button class="btn btn-navy" type="submit">Save Record</button></form>';
+    const showGal = (v) => {
+      $("dBody").querySelectorAll(".gal").forEach((el) => (el.hidden = el.dataset.g !== v));
+      $("dBody").querySelector('input[name="gal"][value="' + v + '"]').checked = true;
+      if (v === "aerial" && !aerialMap) mountAerial(s);
+    };
+    $("dBody").querySelectorAll('input[name="gal"]').forEach((r) => r.addEventListener("change", () => showGal(r.value)));
+    $("dBody").querySelectorAll("[data-gal]").forEach((b) => b.addEventListener("click", () => { showGal(b.dataset.gal); $("dBody").querySelector(".gal-tabs").scrollIntoView({ behavior: "smooth", block: "nearest" }); }));
 
+    if (aerialMap) { aerialMap.remove(); aerialMap = null; }
     $("dPhotoIn").addEventListener("change", (e) => {
       const f = e.target.files[0]; if (!f) return;
       const rd = new FileReader();
@@ -460,14 +649,44 @@
     });
     $("recForm").addEventListener("submit", (e) => {
       e.preventDefault();
-      const rec = { date: $("rDate").value, type: $("rType").value, by: $("rBy").value || "Unspecified", note: $("rNote").value, added: true };
-      s.history.push(rec);
-      s.history.sort((a, b) => a.date.localeCompare(b.date));
-      if (rec.type.includes("inspection")) { s.last_inspected = rec.date; s.inspection_method = rec.type === "Drone inspection" ? "Drone (RGB)" : "Ground"; }
+      const type = $("rType").value;
+      const r = applyUpdate({ site_id: s.id, date: $("rDate").value, activity: type, by: $("rBy").value || "Unspecified", note: $("rNote").value,
+        height_in: $("rH").value, cover_pct: $("rC").value, stage: $("rS").value });
+      afterUpdate();
       openDrawer(s);
-      toast(rec.type + " saved for " + s.id);
+      toast(type + " saved for " + s.id + (r.changes.length ? " · " + r.changes.join(", ") : ""));
     });
   }
+
+  /* ---- Updating sites from the record form or an uploaded file (CSV or GeoJSON rows keyed by site_id).
+     A row can carry a new observation (height, cover, stage, species), an activity record, or both. ---- */
+  const pick = (r, keys) => { for (const k of keys) if (r[k] !== undefined && String(r[k]).trim() !== "") return String(r[k]).trim(); return null; };
+  function applyUpdate(r, source) {
+    const s = byId[pick(r, ["site_id", "site", "id"]) || ""];
+    if (!s) return { ok: false, changes: [] };
+    const date = pick(r, ["date", "inspected", "last_inspected"]) || D.meta.as_of, changes = [];
+    const num = (keys, field, max) => {
+      const v = pick(r, keys); if (v === null || !isFinite(+v)) return;
+      const n = Math.max(0, Math.min(max, Math.round(+v)));
+      if (n !== s[field]) { changes.push(field === "height_in" ? "height " + s[field] + "→" + n + " in" : "cover " + s[field] + "→" + n + "%"); s[field] = n; }
+    };
+    num(["height_in", "height"], "height_in", 200);
+    num(["cover_pct", "density_pct", "weed_cover", "cover"], "density_pct", 100);
+    const st = pick(r, ["stage", "growth_stage"]), stage = st && STAGE_ORDER.find((x) => x.toLowerCase() === st.toLowerCase());
+    if (stage && stage !== s.stage) { changes.push("stage " + s.stage.toLowerCase() + "→" + stage.toLowerCase()); s.stage = stage; }
+    const sp = pick(r, ["species"]);
+    if (sp && sp !== s.species) { changes.push("species " + sp); s.species = sp; }
+    const type = pick(r, ["activity", "type", "record"]), note = pick(r, ["note", "notes"]);
+    if (type || changes.length) {
+      const t = type || "Data update", by = pick(r, ["by", "crew", "contractor"]) || source || "Uploaded";
+      s.history.push({ date, type: t, by, note: [note, changes.length ? "Updated " + changes.join(", ") : ""].filter(Boolean).join(" · "), added: true });
+      s.history.sort((a, b) => a.date.localeCompare(b.date));
+      if (/inspection|update/i.test(t) && date > s.last_inspected) { s.last_inspected = date; s.inspection_method = /drone/i.test(t) ? "Drone (RGB)" : /ground/i.test(t) ? "Ground" : s.inspection_method; }
+    }
+    s._updated = true;
+    return { ok: true, changes, record: !!type };
+  }
+  function afterUpdate() { renderSites(); renderPatches(); }
   $("dClose").addEventListener("click", () => { $("drawer").hidden = true; state.selected = null; renderSites(); });
 
   /* --------------------------------------------------- 5. planning heuristic */
@@ -593,30 +812,42 @@
     const dayStart = sh + sm / 60;
     let day = 1, used = 0, cur = depot.node, travelM = 0;
     const stops = [], path = [];
+    // track: what the crew is doing when, for the plan timeline (drive legs on the road network, work on the site's coverage path)
+    const track = [];
+    const drive = (nodes, m) => track.push({ day, t0: dayStart + used, t1: dayStart + used + m / M_PER_MI / TRUCK_MPH, kind: "drive", coords: nodes.map((n) => G.nodes[n]) });
     chunk.forEach((s) => {
       const wk = workHours(s, action, p);
       let legM = dijkstra(cur).dist[s.mid_node];
       let legH = legM / M_PER_MI / TRUCK_MPH;
       if (used > 0 && used + legH + wk.h > p.hours) {
+        const back = pathNodes(cur, depot.node), backM = dijkstra(cur).dist[depot.node];
+        drive(back, backM);
         day++; used = 0;
-        path.push(...pathNodes(cur, depot.node));
-        travelM += dijkstra(cur).dist[depot.node];
+        path.push(...back);
+        travelM += backM;
         cur = depot.node; legM = dijkstra(cur).dist[s.mid_node]; legH = legM / M_PER_MI / TRUCK_MPH;
       }
-      path.push(...pathNodes(cur, s.mid_node));
+      const go = pathNodes(cur, s.mid_node);
+      drive(go, legM);
+      path.push(...go);
       travelM += legM; used += legH;
       const t0 = dayStart + used;
       used += wk.h;
-      stops.push({ site: s, day, start: t0, end: dayStart + used, wk, hold });
+      const cover = coverPath(s, action, p.drone.swath_m);
+      const coords = cover.length > 1 ? cover : s.coords;
+      track.push({ day, t0, t1: dayStart + used, kind: "work", coords });
+      stops.push({ site: s, day, start: t0, end: dayStart + used, wk, hold, cover: coords, coverMi: pathLen(coords) / M_PER_MI });
       cur = s.mid_node;
     });
-    path.push(...pathNodes(cur, depot.node));
-    travelM += dijkstra(cur).dist[depot.node];
+    const back = pathNodes(cur, depot.node), backM = dijkstra(cur).dist[depot.node];
+    drive(back, backM);
+    path.push(...back);
+    travelM += backM;
     const sum = (f) => stops.reduce((a, x) => a + (x.wk[f] || 0), 0);
     return {
-      action, label, color, stops, path, days: day, travelMi: travelM / M_PER_MI,
+      action, label, color, stops, path, track, depot, dayStart, days: day, travelMi: travelM / M_PER_MI,
       workH: stops.reduce((a, x) => a + x.wk.h, 0), mix: sum("mix"), product: sum("product"), sorties: sum("sorties"),
-      laneMi: sum("laneMi"), flownMi: sum("flownMi"), hold,
+      laneMi: sum("laneMi"), flownMi: sum("flownMi"), coverMi: stops.reduce((a, x) => a + x.coverMi, 0), hold,
     };
   }
 
@@ -641,7 +872,7 @@
     ].map(([v, l]) => '<div class="kpi"><b>' + v + "</b><span>" + l + "</span></div>").join("");
     $("units").innerHTML = U.map((u, i) =>
       '<button type="button" class="unit-card" data-i="' + i + '" aria-pressed="false"><i class="sw" style="background:' + u.color + '"></i><div><b>' + esc(u.label) + "</b><span>" +
-      u.stops.length + " sites · " + fmt(u.travelMi, 0) + " mi travel" + (u.action === "spray" ? " · " + u.sorties + " sorties" : "") + (u.hold ? " · weather hold" : "") +
+      u.stops.length + " sites · " + fmt(u.travelMi, 0) + " mi travel" + (u.action === "spray" ? " · " + u.sorties + " sorties, " + fmt(u.coverMi, 1) + " mi flown" : u.action === "mow" ? " · " + fmt(u.coverMi, 1) + " mi of passes" : "") + (u.hold ? " · weather hold" : "") +
       '</span></div><div class="t">' + u.days + "d · " + fmt(u.workH, 1) + "h</div></button>").join("");
 
     // herbicide by product
@@ -662,6 +893,8 @@
         (u.action === "spray" ? "<br><small>" + fmt(x.wk.mix, 1) + " gal mix, " + x.wk.sorties + " sortie" + (x.wk.sorties > 1 ? "s" : "") + "</small>" : "") +
         '</td><td class="n">' + fmt(x.end - x.start, 1) + " h</td></tr>").join("") + "</tbody>";
 
+    $("recCard").hidden = true;
+    initTimeline();
     drawPlanLayer();
     renderSites();
     drawLegend();
@@ -669,21 +902,119 @@
   }
 
   function drawPlanLayer() {
-    planLayer.clearLayers();
+    planLayer.clearLayers(); coverLayer.clearLayers();
+    crewMarkers = []; stopMarkers = [];
+    syncZoomLayers();
     if (!state.plan || state.view !== "plan") return;
     state.plan.units.forEach((u, i) => {
       const dim = state.focusUnit !== null && state.focusUnit !== i;
       const coords = u.path.map((k) => G.nodes[k]);
       L.polyline(coords, { color: u.color, weight: 4, opacity: dim ? 0.12 : 0.9, dashArray: u.action === "mow" ? null : "8 6", interactive: false }).addTo(planLayer);
       if (dim) return;
+      // coverage on each site (zoom in): drone passes over weed patches, mower passes along the strip, scout flight line
+      u.stops.forEach((x) => L.polyline(x.cover, { renderer: canvasP, color: u.color, weight: u.action === "mow" ? 3 : 2, opacity: 0.95,
+        dashArray: u.action === "inspect" ? "4 4" : null, interactive: false }).addTo(coverLayer));
       u.stops.forEach((x, j) => {
         const mid = x.site.coords[Math.floor(x.site.coords.length / 2)];
-        L.marker(mid, { icon: L.divIcon({ className: "", html: '<div class="stop-icon" style="background:' + u.color + '">' + (j + 1) + "</div>", iconSize: [22, 22], iconAnchor: [11, 11] }) })
-          .bindTooltip("<b>" + esc(u.label) + " · stop " + (j + 1) + "</b><br>" + esc(x.site.id) + "<br>" + dayDate(state.plan.p.date, x.day) + ", " + clock(x.start) + "–" + clock(x.end))
+        const m = L.marker(mid, { icon: L.divIcon({ className: "", html: '<div class="stop-icon" style="background:' + u.color + '">' + (j + 1) + "</div>", iconSize: [22, 22], iconAnchor: [11, 11] }) })
+          .bindTooltip("<b>" + esc(u.label) + " · stop " + (j + 1) + "</b><br>" + esc(x.site.id) + "<br>" + dayDate(state.plan.p.date, x.day) + ", " + clock(x.start) + "–" + clock(x.end) +
+            "<br>" + (u.action === "spray" ? fmt(x.wk.treated, 2) + " ac sprayed, " + fmt(x.coverMi, 2) + " mi flown" : u.action === "mow" ? fmt(x.coverMi, 2) + " mi of mower passes" : fmt(x.coverMi, 2) + " mi scouting flight"))
           .on("click", () => openDrawer(x.site)).addTo(planLayer);
+        stopMarkers.push({ m, v: tlValue(x.day, x.end) });
+      });
+      crewMarkers.push({ u, m: L.marker(u.depot.latlng, { icon: crewIcon(u), zIndexOffset: 1000, interactive: false }).addTo(planLayer) });
+    });
+    setPlanTime(state.tl ? state.tl.v : 0);
+  }
+
+  /* ---- Plan timeline: a Gantt chart of every crew's working days and a time slider that moves crews along their tracks.
+     The slider runs over working hours only (nights are skipped). ---- */
+  let crewMarkers = [], stopMarkers = [], playT = null;
+  const CREW_SVG = {
+    drone: '<svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19" stroke="#fff" stroke-width="2.4"/><circle cx="5" cy="5" r="3.4"/><circle cx="19" cy="5" r="3.4"/><circle cx="5" cy="19" r="3.4"/><circle cx="19" cy="19" r="3.4"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="#fff"/></svg>',
+    mower: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="10" rx="2" fill="#fff"/><rect x="16" y="9" width="5" height="7" rx="1" fill="#fff"/><circle cx="7" cy="18" r="3" fill="#fff"/><circle cx="17" cy="18" r="2.2" fill="#fff"/></svg>',
+  };
+  const crewIcon = (u) => L.divIcon({ className: "", html: '<div class="crew-icon" style="--c:' + u.color + '">' + (u.action === "mow" ? CREW_SVG.mower : CREW_SVG.drone) + "</div>", iconSize: [30, 30], iconAnchor: [15, 15] });
+  function tlValue(day, h) { const T = state.tl; return T ? (day - 1) * T.span + (h - T.ds) : 0; }
+  function initTimeline() {
+    stopPlay();
+    const U = state.plan.units;
+    if (!U.length) { state.tl = null; $("timeline").hidden = true; return; }
+    const ds = U[0].dayStart, days = Math.max(...U.map((u) => u.days));
+    const span = Math.ceil(2 * Math.max(...U.flatMap((u) => u.track.map((t) => t.t1 - ds)))) / 2;
+    state.tl = { ds, days, span, total: days * span, v: 0 };
+    $("timeline").hidden = false;
+    $("tlSlider").max = state.tl.total; $("tlSlider").value = 0;
+    drawGantt();
+  }
+  function drawGantt() {
+    const T = state.tl, U = state.plan.units, W = 352, LBL = 78, ROW = 22, TOP = 20, H = TOP + U.length * ROW + 6;
+    const x = (v) => (LBL + (W - LBL - 4) * v / T.total).toFixed(1);
+    let s = '<svg viewBox="0 0 ' + W + " " + H + '" id="ganttSvg" role="img" aria-label="Crew schedule chart">';
+    for (let d = 0; d < T.days; d++) {
+      s += '<line x1="' + x(d * T.span) + '" x2="' + x(d * T.span) + '" y1="14" y2="' + H + '" class="g-day"/>' +
+        (T.days <= 6 || d % Math.ceil(T.days / 6) === 0 ? '<text x="' + (+x(d * T.span) + 3) + '" y="11" class="g-lbl">' + esc(dayDate(state.plan.p.date, d + 1)) + "</text>" : "");
+    }
+    U.forEach((u, i) => {
+      const y = TOP + i * ROW;
+      s += '<text x="0" y="' + (y + 13) + '" class="g-unit">' + esc(u.label.replace(/ crew| unit/g, "").replace("Spray drone", "Spray").replace("Scouting drone", "Scout")) + "</text>";
+      u.track.forEach((t) => {
+        const v0 = tlValue(t.day, t.t0), v1 = tlValue(t.day, t.t1), w = Math.max(0.8, x(v1) - x(v0));
+        s += t.kind === "drive"
+          ? '<rect x="' + x(v0) + '" y="' + (y + 8) + '" width="' + w.toFixed(1) + '" height="3" fill="' + u.color + '" opacity=".45"/>'
+          : '<rect x="' + x(v0) + '" y="' + (y + 3) + '" width="' + w.toFixed(1) + '" height="13" rx="1.5" fill="' + u.color + '"' + (u.hold ? ' class="g-hold"' : "") + "/>";
       });
     });
+    s += '<line id="gCursor" x1="' + LBL + '" x2="' + LBL + '" y1="14" y2="' + H + '" class="g-cursor"/></svg>';
+    $("gantt").innerHTML = s;
+    T.x = (v) => +x(v); T.fromX = (px) => Math.max(0, Math.min(T.total, (px - LBL) / (W - LBL - 4) * T.total));
   }
+  // where a crew is at timeline value v: on its drive leg or work path, else at the staging area
+  function crewAt(u, v) {
+    const T = state.tl, day = Math.min(T.days, Math.floor(v / T.span) + 1), h = T.ds + v - (day - 1) * T.span;
+    const items = u.track.filter((t) => t.day === day);
+    if (!items.length || h <= items[0].t0 || h >= items[items.length - 1].t1) return { ll: u.depot.latlng, kind: "idle" };
+    const t = items.find((it) => h >= it.t0 && h <= it.t1) || items.filter((it) => it.t1 <= h).pop();
+    const f = t.t1 > t.t0 ? clamp01((h - t.t0) / (t.t1 - t.t0)) : 1, c = t.coords;
+    if (c.length < 2) return { ll: c[0], kind: t.kind };
+    t.cum = t.cum || c.reduce((a, p, i) => (a.push(i ? a[i - 1] + Math.hypot(p[0] - c[i - 1][0], (p[1] - c[i - 1][1]) * 0.76) : 0), a), []);
+    const d = f * t.cum[t.cum.length - 1];
+    let i = 1; while (i < c.length - 1 && t.cum[i] < d) i++;
+    const seg = t.cum[i] - t.cum[i - 1] || 1, r = (d - t.cum[i - 1]) / seg;
+    return { ll: [c[i - 1][0] + (c[i][0] - c[i - 1][0]) * r, c[i - 1][1] + (c[i][1] - c[i - 1][1]) * r], kind: t.kind };
+  }
+  function setPlanTime(v) {
+    const T = state.tl; if (!T) return;
+    T.v = v = Math.max(0, Math.min(T.total, v));
+    $("tlSlider").value = v;
+    const day = Math.min(T.days, Math.floor(v / T.span) + 1), h = T.ds + v - (day - 1) * T.span;
+    $("tlClock").textContent = "Day " + day + " · " + dayDate(state.plan.p.date, day) + " · " + clock(h);
+    const cur = $("gCursor"); if (cur) { cur.setAttribute("x1", T.x(v)); cur.setAttribute("x2", T.x(v)); }
+    crewMarkers.forEach(({ u, m }) => { const at = crewAt(u, v); m.setLatLng(at.ll); const el = m.getElement(); if (el) el.firstChild.dataset.kind = at.kind; });
+    stopMarkers.forEach(({ m, v: done }) => { const el = m.getElement(); if (el) el.firstChild.classList.toggle("done", v >= done); });
+  }
+  const PLAY_HTML = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5v11l9-5.5-9-5.5Z"/></svg><span>Play</span>';
+  const PAUSE_HTML = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 4h3v12h-3zM11.5 4h3v12h-3z"/></svg><span>Pause</span>';
+  function stopPlay() { if (playT) cancelAnimationFrame(playT); playT = null; $("tlPlay").innerHTML = PLAY_HTML; $("tlPlay").setAttribute("aria-pressed", "false"); }
+  $("tlPlay").addEventListener("click", () => {
+    if (playT) { stopPlay(); return; }
+    const T = state.tl; if (!T) return;
+    if (T.v >= T.total) T.v = 0;
+    $("tlPlay").innerHTML = PAUSE_HTML; $("tlPlay").setAttribute("aria-pressed", "true");
+    let last = performance.now();
+    const step = (now) => {
+      setPlanTime(T.v + (now - last) / 1000 * +$("tlSpeed").value); last = now;
+      if (T.v >= T.total) { stopPlay(); return; }
+      playT = requestAnimationFrame(step);
+    };
+    playT = requestAnimationFrame(step);
+  });
+  $("tlSlider").addEventListener("input", () => { stopPlay(); setPlanTime(+$("tlSlider").value); });
+  $("gantt").addEventListener("click", (e) => {
+    const svg = $("ganttSvg"); if (!svg || !state.tl) return;
+    const r = svg.getBoundingClientRect();
+    stopPlay(); setPlanTime(state.tl.fromX((e.clientX - r.left) / r.width * 352));
+  });
   $("units").addEventListener("click", (e) => {
     const b = e.target.closest(".unit-card"); if (!b) return;
     const i = +b.dataset.i;
@@ -712,35 +1043,82 @@
     downloadCSV("vegetation_control_plan.csv", rows);
   });
 
+  // CSV with quoted fields ("a, b" and "" escapes)
+  function parseCSV(text) {
+    const rows = []; let row = [], cur = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) { if (ch === '"' && text[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') q = false; else cur += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === ",") { row.push(cur); cur = ""; }
+      else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(cur); cur = ""; if (row.some((v) => v.trim() !== "")) rows.push(row); row = []; }
+      else cur += ch;
+    }
+    row.push(cur); if (row.some((v) => v.trim() !== "")) rows.push(row);
+    return rows;
+  }
+  // Template for field updates: one observation, one control record, one record with an observation
+  $("downloadTemplate").addEventListener("click", () => {
+    const weed = D.sites.filter((s) => s.herbicide), a = weed[3], b = weed[11], c = D.sites.find((s) => !s.herbicide);
+    downloadCSV("site_updates_template.csv", [
+      ["site_id", "date", "activity", "by", "height_in", "cover_pct", "stage", "species", "note"],
+      [a.id, D.meta.as_of, "Drone inspection", "UIUC research team", a.height_in + 14, Math.min(95, a.density_pct + 25), "Seed set", "", "Multispectral survey, 120 ft AGL"],
+      [b.id, D.meta.as_of, "Drone spot spray", "Contractor", "", Math.max(0, b.density_pct - 20), "", "", D.herbicides[b.herbicide].name + " applied"],
+      [c.id, D.meta.as_of, "Mowing", c.region === "chicago" ? "IDOT D1 mower" : "IDOT D5 mower", 4, "", "", "", "Safety strip, 15 ft"],
+    ]);
+  });
+
   $("uploadData").addEventListener("change", (e) => {
     const f = e.target.files[0]; if (!f) return;
     const rd = new FileReader();
     rd.onload = () => {
       try {
-        let layer, count = 0;
+        let layer = L.featureGroup(), count = 0;
         const style = { color: "#e0663a", weight: 3, fillOpacity: 0.3 };
+        const up = { sites: new Set(), records: 0, changes: 0, unmatched: [] };
+        // rows keyed by a known site_id update that site; other rows with coordinates are shown as new features
+        const tryUpdate = (row) => {
+          const id = pick(row, ["site_id", "site", "id"]);
+          if (!id) return false;
+          const r = applyUpdate(row, "Upload: " + f.name);
+          if (!r.ok) { up.unmatched.push(id); return true; }
+          up.sites.add(id); up.records += r.record ? 1 : 0; up.changes += r.changes.length;
+          return true;
+        };
         if (/\.csv$/i.test(f.name)) {
-          const lines = rd.result.trim().split(/\r?\n/), head = lines[0].split(",").map((h) => h.trim().toLowerCase());
+          const rows = parseCSV(rd.result), head = (rows.shift() || []).map((h) => h.trim().toLowerCase());
           const la = head.findIndex((h) => ["lat", "latitude", "y"].includes(h)), lo = head.findIndex((h) => ["lon", "lng", "long", "longitude", "x"].includes(h));
-          if (la < 0 || lo < 0) throw new Error("The CSV needs latitude and longitude columns (lat, lon).");
-          layer = L.featureGroup();
-          lines.slice(1).forEach((ln) => {
-            const c = ln.split(","); const lat = +c[la], lon = +c[lo]; if (!isFinite(lat) || !isFinite(lon)) return;
+          if (!head.includes("site_id") && (la < 0 || lo < 0)) throw new Error("The CSV needs a site_id column (to update sites) or latitude and longitude columns (lat, lon). Download the template for an example.");
+          rows.forEach((c) => {
+            const row = Object.fromEntries(head.map((h, i) => [h, c[i]]));
+            if (tryUpdate(row)) return;
+            const lat = +c[la], lon = +c[lo]; if (la < 0 || !isFinite(lat) || !isFinite(lon)) return;
             count++;
             L.circleMarker([lat, lon], { radius: 6, color: "#fff", weight: 2, fillColor: "#e0663a", fillOpacity: 0.9 })
               .bindPopup(head.map((h, i) => "<b>" + esc(h) + "</b>: " + esc(c[i] ?? "")).join("<br>")).addTo(layer);
           });
         } else {
           const gj = JSON.parse(rd.result);
-          layer = L.geoJSON(gj, {
+          const feats = (gj.type === "FeatureCollection" ? gj.features : [gj]).filter((ft) => !(ft.properties && tryUpdate(Object.fromEntries(Object.entries(ft.properties).map(([k, v]) => [k.toLowerCase(), v])))));
+          layer = L.geoJSON({ type: "FeatureCollection", features: feats }, {
             style, pointToLayer: (_, ll) => L.circleMarker(ll, { radius: 6, color: "#fff", weight: 2, fillColor: "#e0663a", fillOpacity: 0.9 }),
             onEachFeature: (ft, l) => { count++; if (ft.properties) l.bindPopup(Object.entries(ft.properties).map(([k, v]) => "<b>" + esc(k) + "</b>: " + esc(v)).join("<br>")); },
           });
         }
-        if (!count) throw new Error("No features with coordinates were found in " + f.name + ".");
-        layer.addTo(uploadLayer);
-        map.fitBounds(layer.getBounds().pad(0.2), fitPad());
-        $("uploadNote").textContent = "Added " + count + " feature" + (count > 1 ? "s" : "") + " from " + f.name + " (orange on the map).";
+        if (!count && !up.sites.size) throw new Error(up.unmatched.length ? "None of the site_id values in " + f.name + " match a site (e.g. " + up.unmatched[0] + ")." : "No features with coordinates were found in " + f.name + ".");
+        const msg = [];
+        if (up.sites.size) {
+          afterUpdate();
+          msg.push("Updated " + up.sites.size + " site" + (up.sites.size > 1 ? "s" : "") + " (" + up.changes + " value change" + (up.changes === 1 ? "" : "s") + ", " + up.records + " record" + (up.records === 1 ? "" : "s") + " added). Sites were screened again; updated sites are tagged in the site list.");
+          map.fitBounds(L.latLngBounds([...up.sites].flatMap((id) => byId[id].coords)).pad(0.3), fitPad());
+        }
+        if (up.unmatched.length) msg.push(up.unmatched.length + " row(s) with an unknown site_id were skipped.");
+        if (count) {
+          layer.addTo(uploadLayer);
+          if (!up.sites.size) map.fitBounds(layer.getBounds().pad(0.2), fitPad());
+          msg.push("Added " + count + " feature" + (count > 1 ? "s" : "") + " from " + f.name + " (orange on the map).");
+        }
+        $("uploadNote").textContent = msg.join(" ");
       } catch (err) {
         $("uploadNote").textContent = err.message.startsWith("Unexpected") ? "Could not read " + f.name + ". Check that it is valid GeoJSON." : err.message;
       }
@@ -819,6 +1197,7 @@
   });
 
   const lyr = { lyrSites: siteLayer, lyrRoads: roadLayer, lyrActivity: activityLayer, lyrDepots: depotLayer };
+  ["lyrAreas", "lyrPatches"].forEach((id) => $(id).addEventListener("change", syncZoomLayers));
   $("lyrMP").addEventListener("change", syncMP);
   Object.entries(lyr).forEach(([id, layer]) => $(id).addEventListener("change", (e) => (e.target.checked ? layer.addTo(map) : map.removeLayer(layer))));
   document.querySelectorAll('input[name="basemap"]').forEach((r) => r.addEventListener("change", () => {
@@ -831,6 +1210,7 @@
     if (!VIEWS.includes(v)) v = "home";
     if (state.view !== v) { $("drawer").hidden = true; state.selected = null; }
     if (v !== "veg") $("listCard").hidden = true;
+    if (v !== "plan") { $("recCard").hidden = true; stopPlay(); }
     state.view = v;
     renderDepotMarkers();
     document.querySelectorAll(".navbar a").forEach((a) => (a.dataset.view === v ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
@@ -840,7 +1220,7 @@
     $("panel-veg").hidden = v !== "veg";
     $("panel-plan").hidden = v !== "plan";
     if (v !== "plan") { $("planOut").hidden = true; if (typeof syncPlanSketch === "function") syncPlanSketch(); }
-    else { if (state.plan) $("planOut").hidden = false; if (typeof syncPlanSketch === "function") syncPlanSketch(); }
+    else { if (state.plan) $("planOut").hidden = false; else if (planSel().ok) $("recCard").hidden = false; if (typeof syncPlanSketch === "function") syncPlanSketch(); }
     if (onMap) {
       map.invalidateSize();
       if (!fitted) { fitAllSites(); fitted = true; }
@@ -856,7 +1236,7 @@
   function setRegion(id) { // the area the plan works on; resets depots and any old plan
     if (state.region === id) return;
     state.region = id; $("drawer").hidden = true; state.selected = null;
-    state.plan = null; planLayer.clearLayers(); $("planOut").hidden = true;
+    state.plan = null; state.tl = null; planLayer.clearLayers(); coverLayer.clearLayers(); $("planOut").hidden = true;
     state.depotRows = [D.depots.find((d) => d.region === id).id];
     renderDepotRows();
   }
@@ -983,21 +1363,61 @@
     if (!picked.length) return { ok: false, mode, msg: "Pick at least one site on the map." };
     return { ok: true, mode, region: picked[0].region, filter: (s) => state.picked.has(s.id) };
   }
-  function onPlanAreaChange(fit) {
+  // Generate Plan is enabled only when the selection has flagged sites; rerun after every screening (thresholds, overrides, uploads)
+  function syncPlanReady() {
     const sel = planSel();
-    if (state.plan) { state.plan = null; planLayer.clearLayers(); $("planOut").hidden = true; } // selection changed: old plan no longer applies
-    if (sel.ok) setRegion(sel.region);
     const flagged = sel.ok ? D.sites.filter((s) => s._rec && s.region === sel.region && sel.filter(s)).length : 0;
     $("pRun").disabled = !sel.ok || !flagged;
     $("pReady").hidden = sel.ok && flagged > 0;
     $("pReady").textContent = !sel.ok ? sel.msg : flagged ? "" : "No flagged sites in this selection.";
+    return { sel, flagged };
+  }
+  function onPlanAreaChange(fit) {
+    const sel = planSel();
+    if (state.plan) { state.plan = null; state.tl = null; stopPlay(); planLayer.clearLayers(); coverLayer.clearLayers(); $("planOut").hidden = true; } // selection changed: old plan no longer applies
+    if (state.view === "plan" && sel.ok && $("drawer").hidden) $("recCard").hidden = false;
+    if (sel.ok) setRegion(sel.region);
+    renderSites(); // screens the sites first, so the flagged count below is current
+    const { flagged } = syncPlanReady();
     if (sel.mode === "draw" && drawPoly) $("drawNote").textContent = sel.ok ? flagged + " flagged site(s) inside this area." : sel.msg;
-    renderSites();
     if (fit && sel.ok && sel.mode !== "pick") {
       const pts = D.sites.filter((s) => s.region === sel.region && sel.filter(s)).flatMap((s) => [s.coords[0], s.coords[s.coords.length - 1]]);
       if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.08), fitPad());
     }
   }
+  // ---- Recommendations card: every flagged site in the selection with its recommended action; the planner can change it
+  const REC_TILES = { spray: ["Drone spray", "--a-spray"], mow: ["Mow", "--a-mow"], inspect: ["Inspect", "--a-inspect"], skip: ["Left out", "--muted"] };
+  state.recFilter = null;
+  function renderRecs() {
+    const sel = planSel();
+    const pool = sel.ok ? D.sites.filter((s) => s._auto && s.region === sel.region && sel.filter(s)) : [];
+    const key = (s) => (s._rec ? s._rec.action : "skip"), n = { spray: 0, mow: 0, inspect: 0, skip: 0 };
+    pool.forEach((s) => n[key(s)]++);
+    $("recTitle").textContent = "Recommended actions · " + pool.length + " site" + (pool.length === 1 ? "" : "s");
+    $("recSummary").innerHTML = Object.entries(REC_TILES).map(([k, [lbl, v]]) =>
+      '<button type="button" class="stat" data-a="' + k + '" aria-pressed="' + (state.recFilter === k) + '" style="--c:var(' + v + ')"><b>' + n[k] + "</b><span>" + lbl + "</span></button>").join("");
+    const list = pool.filter((s) => !state.recFilter || key(s) === state.recFilter).sort((a, b) => b._pri.score - a._pri.score || a.id.localeCompare(b.id));
+    $("recList").innerHTML = list.map((s) =>
+      '<li data-id="' + s.id + '">' + shield(s.route) + '<div tabindex="0"><div class="sid">' + esc(s.route + " " + s.dir + " · " + s.label) + '</div><div class="why">' +
+      esc(s._rec ? s._rec.why : "Left out of the plan by the planner") + "</div></div>" + priBadge(s._pri.score) +
+      '<select data-id="' + s.id + '" aria-label="Action for ' + esc(s.id) + '" class="act-sel' + (overrides[s.id] ? " changed" : "") + '">' +
+      ["spray", "mow", "inspect", "skip"].map((a) => '<option value="' + a + '"' + (key(s) === a ? " selected" : "") + ">" + (a === "skip" ? "Leave out" : ACTION[a].label) + (a === s._auto.action ? " (recommended)" : "") + "</option>").join("") +
+      "</select></li>").join("") || '<li class="empty">' + (sel.ok ? "No flagged sites in this group." : esc(sel.msg)) + "</li>";
+  }
+  function showRecs() { $("drawer").hidden = true; state.selected = null; $("planOut").hidden = true; $("recCard").hidden = false; renderSites(); }
+  $("recOpen").addEventListener("click", showRecs);
+  $("recClose").addEventListener("click", () => { $("recCard").hidden = true; if (state.plan) $("planOut").hidden = false; });
+  $("recSummary").addEventListener("click", (e) => { const t = e.target.closest(".stat"); if (!t) return; state.recFilter = state.recFilter === t.dataset.a ? null : t.dataset.a; renderRecs(); });
+  $("recList").addEventListener("change", (e) => {
+    const sel = e.target.closest("select[data-id]"); if (!sel) return;
+    const s = byId[sel.dataset.id];
+    if (sel.value === s._auto.action) delete overrides[s.id]; else overrides[s.id] = sel.value;
+    if (state.plan) { state.plan = null; state.tl = null; planLayer.clearLayers(); coverLayer.clearLayers(); toast("Actions changed: generate the plan again."); }
+    renderSites();
+  });
+  $("recList").addEventListener("click", (e) => { if (e.target.closest("select")) return; const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); });
+  $("recList").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.target.closest("select")) { const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); } });
+
   document.querySelectorAll('input[name="pMode"]').forEach((r) => r.addEventListener("change", () => {
     const m = planMode();
     $("pmLoc").hidden = m !== "loc"; $("pmDraw").hidden = m !== "draw"; $("pmPick").hidden = m !== "pick";
@@ -1165,7 +1585,47 @@
     ' <span class="muted">(' + esc(k.replace("/", ": ")) + ")</span></li>").join("") +
     '<li class="muted">Height and cover schematics are drawn by the portal.</li>';
 
+  /* ---- Home page snapshot of the demo network (status at the current screening limits) ---- */
+  function fillSnapshot() {
+    const th = thresholds(), put = (k, v) => { const el = document.querySelector('#snapshot [data-k="' + k + '"]'); if (el) el.textContent = v; };
+    const n = (v) => Math.round(v).toLocaleString("en-US");
+    put("sites", n(D.sites.length));
+    put("miles", n(D.sites.reduce((a, s) => a + s.length_mi, 0) / 2)); // one site per direction
+    put("acres", n(D.sites.reduce((a, s) => a + s.area_ac, 0)));
+    put("control", n(D.sites.filter((s) => (s._ev || evaluate(s, th)).status === "control").length));
+    put("yards", n(D.depots.filter((d) => !d.custom).length));
+    put("drones", n(D.drones.length));
+  }
+
+  /* ---- Collapsible panel sections (data-fold="open|closed"); a folded section shows a one-line summary ---- */
+  const FOLD_SUM = {
+    loc: () => ($("locState").value ? $("locState").selectedOptions[0].textContent + ($("locCounty").value ? ", " + $("locCounty").selectedOptions[0].textContent : "") : "Demo areas"),
+    layers: () => { const c = [...$("panel-veg").querySelectorAll('[data-sum="layers"] input[type="checkbox"]')]; return c.filter((x) => x.checked).length + " of " + c.length + " on"; },
+    ops: () => dayDate($("pDate").value, 1) + " · " + $("pStart").value + " · " + $("pHours").value + " h · wind " + $("pWind").value + " mph",
+  };
+  const FOLD_SVG = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function syncFoldSums() { document.querySelectorAll(".fp-sec[data-sum]").forEach((sec) => { sec.querySelector(".fold-sum").textContent = FOLD_SUM[sec.dataset.sum](); }); }
+  document.querySelectorAll(".fp-sec[data-fold]").forEach((sec, i) => {
+    const h = sec.querySelector(":scope > h4"); if (!h) return;
+    const body = [...sec.children].filter((c) => c !== h);
+    body.forEach((c, j) => { if (!c.id) c.id = "fold" + i + "_" + j; });
+    if (sec.dataset.sum) h.insertAdjacentHTML("beforeend", '<span class="fold-sum"></span>');
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "fold"; b.innerHTML = FOLD_SVG;
+    b.setAttribute("aria-controls", body.map((c) => c.id).join(" "));
+    const set = (open) => { sec.classList.toggle("folded", !open); b.setAttribute("aria-expanded", String(open)); b.setAttribute("aria-label", (open ? "Collapse " : "Expand ") + h.firstChild.textContent.trim()); };
+    b.addEventListener("click", () => set(sec.classList.contains("folded")));
+    h.addEventListener("click", (e) => { if (!e.target.closest(".info, .fold")) b.click(); }); // the whole heading toggles; the button is the keyboard control
+    h.appendChild(b);
+    set(sec.dataset.fold !== "closed");
+  });
+  ["locState", "locCounty", "pDate", "pStart", "pHours", "pWind"].forEach((id) => $(id).addEventListener("change", syncFoldSums));
+  $("panel-veg").querySelectorAll('[data-sum="layers"] input').forEach((c) => c.addEventListener("change", syncFoldSums));
+
   syncOutputs();
+  syncFoldSums();
+  fillSnapshot();
+  renderPatches();
   setView((location.hash || "#home").slice(1));
   onPlanAreaChange();
   if (window.LoadKit) { LoadKit.Big.hide(); loadNational(); }
