@@ -1,0 +1,10 @@
+// Cloudflare Workers config for the live site (vegportal.uiuc-amt.workers.dev).
+// The site is static: Cloudflare serves the files in this folder as-is.
+// "name" must match the Worker name in the Cloudflare dashboard, or Workers Builds refuses to deploy.
+{
+  "name": "vegportal",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "."
+  }
+}
