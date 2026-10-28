@@ -2,6 +2,14 @@
 
 A front-end prototype for the AMT Phase 2 pooled fund project TPF-5(559): drone-based herbicide spraying for roadside vegetation control.
 
+## Deployment
+
+The live site is https://vegportal.uiuc-amt.workers.dev (Cloudflare Workers, static assets).
+Cloudflare Workers Builds is connected to this repository: every push to `main` deploys the site
+automatically within a minute or two. Do not upload the folder by hand any more; the next push
+would overwrite it. `wrangler.jsonc` names the Worker (`vegportal`), and `.assetsignore` keeps
+`tools/`, `gis_source_data/` and git files off the live site.
+
 ## How to open it
 
 **Simplest way:** double-click `index.html`. It opens in your browser, with no server needed.
