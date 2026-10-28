@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<a class="skip" href="#main" data-skip>Skip to main content</a>
 
 <!-- ===== Header (INTERMODAL style: navy band, logo | wordmark, orange nav) ===== -->
 <header class="site-head">
@@ -37,66 +38,169 @@
   </nav>
 </header>
 
-<main id="main">
+<main id="main" tabindex="-1">
 
   <!-- ================= HOME ================= -->
+  <!-- Reading pages are full width: each .band spans the window, .wrap holds the content (max 1280 px) -->
   <section class="page" id="view-home" data-page="home" hidden>
-    <div class="page-inner">
-      <p class="intro"><b>Roadside Vegetation Portal</b> is a GIS-based information and operations-planning platform for <b>drone-based herbicide spraying</b> along state highways. It helps transportation agencies track roadside vegetation, find sites that need control, and plan <b>drone spraying, mowing, and inspection</b> routes that are safe, efficient and compliant.</p>
-
-      <div class="cards4">
-        <a class="card" href="#veg" data-view="veg"><h3>Vegetation Information</h3><p>Geo-coded roadside vegetation data: species, height, density, growth stage, photos, and control history.</p></a>
-        <a class="card" href="#plan" data-view="plan"><h3>Operations Planning</h3><p>Recommend mowing, drone spraying or inspection, and plan crew routes with time and herbicide estimates.</p></a>
-        <a class="card" href="#drones" data-view="drones"><h3>Drone Technology</h3><p>Market review of spraying drones, payloads and productivity, and the FAA rules that apply.</p></a>
-        <div class="card"><h3>Operational Guidelines</h3><p>Equipment, licensing and step-by-step guidance so DOTs can adopt drones in their vegetation programs.</p></div>
-      </div>
-
-      <h2 class="sec-h">Research flow</h2>
-      <div class="flow" role="list">
-        <div class="flow-col" role="listitem">
-          <div class="flow-phase">Phase 1 · 2026–27</div>
-          <div class="flow-box"><b>Task 1</b>Literature, regulation &amp; technology market survey</div>
-          <div class="flow-box"><b>Task 2</b>Cost–benefit analysis</div>
-        </div>
-        <div class="flow-arrow" aria-hidden="true"></div>
-        <div class="flow-col" role="listitem">
-          <div class="flow-phase">Phase 2 · 2027–28</div>
-          <div class="flow-box"><b>Task 5</b>Field experiments &amp; drone spray demonstrations</div>
-          <div class="flow-box"><b>Task 6</b>Operational prototype with partner DOTs</div>
-        </div>
-        <div class="flow-arrow" aria-hidden="true"></div>
-        <div class="flow-col" role="listitem">
-          <div class="flow-phase">Phase 3 · 2028–29</div>
-          <div class="flow-box hl"><b>Task 3</b>GIS-based information tool (digital twin)</div>
-          <div class="flow-box hl"><b>Task 4</b>Scheduling &amp; route planning tool</div>
-        </div>
-        <div class="flow-arrow" aria-hidden="true"></div>
-        <div class="flow-col" role="listitem">
-          <div class="flow-phase">Deliverables</div>
-          <div class="flow-box dark"><b>Task 7</b>Recommendations &amp; operational guidelines</div>
+    <div class="page-inner home">
+      <div class="band hero-band">
+        <div class="wrap hero">
+          <div class="hero-txt">
+            <p class="eyebrow">AMT Phase 2 Pooled Fund · TPF-5(559)</p>
+            <h1 class="hero-h">Roadside vegetation, mapped and managed</h1>
+            <p class="hero-lead">A GIS portal for <b>drone-based herbicide spraying</b> along state highways. Track roadside vegetation, screen the network for sites that need control, and plan <b>drone spraying, mowing and inspection</b> crews with time and herbicide estimates.</p>
+            <div class="hero-cta">
+              <a class="btn btn-orange btn-lg" href="#veg" data-view="veg">Open the vegetation map</a>
+              <a class="btn btn-outline btn-lg" href="#plan" data-view="plan">Plan operations</a>
+            </div>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <svg class="hero-road" viewBox="0 0 520 300" preserveAspectRatio="xMidYMid slice">
+              <path d="M-20 250 C 140 215, 300 225, 540 160" class="hr-row"/>
+              <path d="M-20 250 C 140 215, 300 225, 540 160" class="hr-road"/>
+              <path d="M-20 250 C 140 215, 300 225, 540 160" class="hr-lane"/>
+              <ellipse cx="118" cy="226" rx="34" ry="9" class="hr-patch"/>
+              <ellipse cx="330" cy="213" rx="44" ry="10" class="hr-patch"/>
+              <path d="M40 150 C 140 105, 250 160, 330 120 S 470 70, 520 90" class="hr-flight"/>
+            </svg>
+            <img src="img/hero-drone.webp" width="1078" height="586" alt="" fetchpriority="high" decoding="async">
+          </div>
         </div>
       </div>
-      <p class="note">Highlighted tasks are what this portal demonstrates. Road network, lanes, speed limits and traffic volumes come from FHWA HPMS 2024 and mileposts from IDOT; vegetation records are example data in this prototype.</p>
 
-      <h2 class="sec-h">Project at a glance</h2>
-      <dl class="facts">
-        <div><dt>Program</dt><dd>Autonomous Maintenance Technologies (AMT) Phase 2 Pooled Fund, TPF-5(559)</dd></div>
-        <div><dt>Lead agency</dt><dd>Indiana DOT, with CA, CO, IL, KS, MI, MN, MO, MS, ND, PA and TX</dd></div>
-        <div><dt>Duration</dt><dd>June 2026 – May 2029 (36 months)</dd></div>
-        <div><dt>Research team</dt><dd>Department of Civil and Environmental Engineering, University of Illinois Urbana-Champaign</dd></div>
-      </dl>
+      <div class="wrap snap-wrap">
+        <div class="snapshot" id="snapshot" aria-label="Demo network snapshot">
+          <div class="snap"><b data-k="sites"></b><span>Roadside sites</span></div>
+          <div class="snap"><b data-k="miles"></b><span>Highway miles</span></div>
+          <div class="snap"><b data-k="acres"></b><span>Right-of-way acres</span></div>
+          <div class="snap alert"><b data-k="control"></b><span>Need control now</span></div>
+          <div class="snap"><b data-k="yards"></b><span>IDOT yards for staging</span></div>
+          <div class="snap"><b data-k="drones"></b><span>Spray drones compared</span></div>
+        </div>
+        <p class="note snap-note">Demo areas: Champaign–Urbana and Chicago (Cook County). Road data is real; vegetation records are example data.</p>
+      </div>
 
-      <h2 class="sec-h">Demo areas</h2>
-      <p>Champaign–Urbana (I-74, I-57, US-45; 192 roadside sites) and the Chicago area in Cook County (I-55, I-57, I-80; 100 sites). Road data is real (FHWA HPMS 2024, IDOT mileposts); vegetation records are examples. The map can show any U.S. location, with road detail loaded from FHWA on demand.</p>
+      <div class="band">
+        <div class="wrap">
+          <h2 class="sec-h">What the portal does</h2>
+          <div class="features">
+            <a class="feature" href="#veg" data-view="veg">
+              <span class="f-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 3 7.5l9 4.5 9-4.5L12 3Z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></span>
+              <h3>Vegetation information</h3>
+              <p>Roadside areas with species, height, weed cover, growth stage, ground and drone images, and the full inspection and control history.</p>
+              <span class="f-go">Explore the map <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+            </a>
+            <a class="feature" href="#plan" data-view="plan">
+              <span class="f-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/></svg></span>
+              <h3>Operations planning</h3>
+              <p>Recommended action for every flagged site, crew routes from IDOT yards, a day-by-day timeline, duration and herbicide use.</p>
+              <span class="f-go">Plan a day <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+            </a>
+            <a class="feature" href="#drones" data-view="drones">
+              <span class="f-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="5" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="m7 7 3 3m7-3-3 3m-7 7 3-3m7 3-3-3"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg></span>
+              <h3>Drone technology</h3>
+              <p>Spraying drones from the market survey in 3D, side-by-side specifications, and the FAA rules that shape operations.</p>
+              <span class="f-go">Compare drones <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+            </a>
+            <div class="feature soon">
+              <span class="f-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5v-15Z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M8 7h8M8 11h6"/></svg></span>
+              <h3>Operational guidelines <span class="tag">Task 7</span></h3>
+              <p>Equipment, licensing and step-by-step guidance so DOTs can add drones to their vegetation programs.</p>
+              <span class="f-go muted">Coming with the final report</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <h2 class="sec-h">Photo credits</h2>
-      <p class="note" style="margin-top:0">Representative photos come from Wikimedia Commons under the licenses listed. They show the vegetation type, not the specific site.</p>
-      <ul class="credits" id="credits"></ul>
+      <div class="band alt">
+        <div class="wrap">
+          <h2 class="sec-h">How it works</h2>
+          <ol class="steps">
+            <li><span class="st-n" aria-hidden="true">1</span><div><h3>Collect</h3><p>Drone and ground inspections record vegetation type, height, weed cover and growth stage. Field crews upload updates as CSV or GeoJSON.</p></div></li>
+            <li><span class="st-n" aria-hidden="true">2</span><div><h3>Screen</h3><p>Adjustable triggers flag the sites that need control and rank them by priority: height, weed cover, sight distance, traffic and time since inspection.</p></div></li>
+            <li><span class="st-n" aria-hidden="true">3</span><div><h3>Recommend</h3><p>Each flagged site gets an action: drone spot spraying, mowing or further inspection. Planners can change any of them.</p></div></li>
+            <li><span class="st-n" aria-hidden="true">4</span><div><h3>Plan</h3><p>Crews are routed from IDOT maintenance yards. The timeline plays the work day with travel, work time and herbicide use.</p></div></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="band">
+        <div class="wrap">
+          <h2 class="sec-h">Research flow</h2>
+          <div class="flow" role="list">
+            <div class="flow-col" role="listitem">
+              <div class="flow-phase">Phase 1 · 2026–27</div>
+              <div class="flow-box"><b>Task 1</b>Literature, regulation &amp; technology market survey</div>
+              <div class="flow-box"><b>Task 2</b>Cost–benefit analysis</div>
+            </div>
+            <div class="flow-arrow" aria-hidden="true"></div>
+            <div class="flow-col" role="listitem">
+              <div class="flow-phase">Phase 2 · 2027–28</div>
+              <div class="flow-box"><b>Task 5</b>Field experiments &amp; drone spray demonstrations</div>
+              <div class="flow-box"><b>Task 6</b>Operational prototype with partner DOTs</div>
+            </div>
+            <div class="flow-arrow" aria-hidden="true"></div>
+            <div class="flow-col" role="listitem">
+              <div class="flow-phase">Phase 3 · 2028–29</div>
+              <div class="flow-box hl"><b>Task 3</b>GIS-based information tool (digital twin)</div>
+              <div class="flow-box hl"><b>Task 4</b>Scheduling &amp; route planning tool</div>
+            </div>
+            <div class="flow-arrow" aria-hidden="true"></div>
+            <div class="flow-col" role="listitem">
+              <div class="flow-phase">Deliverables</div>
+              <div class="flow-box dark"><b>Task 7</b>Recommendations &amp; operational guidelines</div>
+            </div>
+          </div>
+          <p class="note">Highlighted tasks are what this portal demonstrates.</p>
+        </div>
+      </div>
+
+      <div class="band alt">
+        <div class="wrap split">
+          <div>
+            <h2 class="sec-h">Demo areas</h2>
+            <div class="regions">
+              <a class="region" href="#veg" data-view="veg">
+                <h3>Champaign–Urbana</h3>
+                <p class="r-routes"><span class="shield i">74</span><span class="shield i">57</span><span class="shield us">45</span></p>
+                <dl><div><dt>Sites</dt><dd>192</dd></div><div><dt>County</dt><dd>Champaign</dd></div><div><dt>IDOT yards</dt><dd>543 Champaign, 544 Leverett</dd></div></dl>
+              </a>
+              <a class="region" href="#veg" data-view="veg">
+                <h3>Chicago area</h3>
+                <p class="r-routes"><span class="shield i">55</span><span class="shield i">57</span><span class="shield i">80</span></p>
+                <dl><div><dt>Sites</dt><dd>100</dd></div><div><dt>County</dt><dd>Cook</dd></div><div><dt>IDOT yards</dt><dd>6 in south Cook County</dd></div></dl>
+              </a>
+            </div>
+            <p class="note">Road network, lanes, speed limits and traffic come from FHWA HPMS 2024; mileposts and maintenance yards from IDOT. Elsewhere in the U.S. the map shows roads only, with detail loaded from FHWA on demand.</p>
+          </div>
+          <div>
+            <h2 class="sec-h">Project at a glance</h2>
+            <dl class="facts one">
+              <div><dt>Program</dt><dd>Autonomous Maintenance Technologies (AMT) Phase 2 Pooled Fund, TPF-5(559)</dd></div>
+              <div><dt>Lead agency</dt><dd>Indiana DOT, with CA, CO, IL, KS, MI, MN, MO, MS, ND, PA and TX</dd></div>
+              <div><dt>Duration</dt><dd>June 2026 – May 2029 (36 months)</dd></div>
+              <div><dt>Research team</dt><dd>Department of Civil and Environmental Engineering, University of Illinois Urbana-Champaign</dd></div>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <div class="band tight">
+        <div class="wrap">
+          <details class="credits-box">
+            <summary>Photo credits</summary>
+            <p class="note" style="margin-top:0">Representative photos come from Wikimedia Commons under the licenses listed. They show the vegetation type, not the specific site.</p>
+            <ul class="credits" id="credits"></ul>
+          </details>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- ================= MAP VIEWS ================= -->
   <section class="mapview" id="view-map" hidden>
+    <h1 class="sr-only">Roadside vegetation map</h1>
     <div id="map" aria-label="Map of roadside vegetation sites"></div>
 
     <!-- vertical legend bar (numeric color modes) -->
@@ -106,8 +210,8 @@
 
     <!-- ---------- Vegetation Information panel ---------- -->
     <aside class="float-panel" id="panel-veg" data-for="veg" aria-label="Vegetation information controls">
-      <div class="fp-top"><span>Vegetation Information</span><button class="collapse" type="button" aria-expanded="true" aria-label="Minimize panel" title="Minimize panel"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 12.5 10 7.5 15 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
-      <div class="fp-sec">
+      <div class="fp-top"><h2 class="fp-title">Vegetation Information</h2><button class="collapse" type="button" aria-expanded="true" aria-label="Minimize panel" title="Minimize panel"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 12.5 10 7.5 15 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      <div class="fp-sec" data-fold="closed" data-sum="loc">
         <h4>Location <i class="info" tabindex="0" role="img" aria-label="Vegetation data is available for Champaign County (Champaign–Urbana) and Cook County (Chicago area). Elsewhere the map shows roads only; road detail loads from FHWA when you zoom in." data-tip="Vegetation data is available for Champaign County (Champaign–Urbana) and Cook County (Chicago area). Elsewhere the map shows roads only; road detail loads from FHWA when you zoom in.">i</i></h4>
         <div class="grid2">
           <label class="field"><span>State</span><select id="locState"><option value="">Choose a state…</option></select></label>
@@ -119,7 +223,7 @@
         <p class="hint" id="locNote"></p>
       </div>
 
-      <div class="fp-sec">
+      <div class="fp-sec" data-fold="open">
         <h4>Visualize</h4>
         <select id="colorBy" aria-label="Color sites by">
           <option value="status">Control status</option>
@@ -131,7 +235,7 @@
         <div class="legend" id="legend"></div>
       </div>
 
-      <div class="fp-sec">
+      <div class="fp-sec" data-fold="closed" data-sum="layers">
         <h4>Layers</h4>
         <div class="checks">
           <label><input type="checkbox" id="lyrSites" checked> Roadside vegetation sites</label>
@@ -150,7 +254,7 @@
         </div>
       </div>
 
-      <div class="fp-sec">
+      <div class="fp-sec" data-fold="open">
         <h4>Screen the Network</h4>
         <div class="slider-row"><label for="thDensity">Weed cover: act at <i class="info" tabindex="0" role="img" aria-label="Share of the site covered by noxious or invasive weeds. At or above this value the site needs control; at half of it the site is watched." data-tip="Share of the site covered by noxious or invasive weeds. At or above this value the site needs control; at half of it the site is watched.">i</i></label><output id="oDensity">20%</output></div>
         <input type="range" id="thDensity" min="0" max="80" step="5" value="20">
@@ -171,7 +275,7 @@
         <button class="btn btn-orange big" id="vizBtn" type="button">Visualize<small>Site list by status</small></button>
       </div>
 
-      <div class="fp-sec">
+      <div class="fp-sec" data-fold="open">
         <h4>Data <i class="info" tabindex="0" role="img" aria-label="Upload field data as CSV or GeoJSON. Download the site layer for use in ArcGIS or QGIS." data-tip="Upload field data as CSV or GeoJSON. Download the site layer for use in ArcGIS or QGIS.">i</i></h4>
         <div class="grid2">
           <label class="btn btn-orange file"><input type="file" id="uploadData" accept=".geojson,.json,.csv">Upload / Update Data</label>
@@ -188,8 +292,8 @@
 
     <!-- ---------- Operations Planning panel ---------- -->
     <aside class="float-panel" id="panel-plan" data-for="plan" hidden aria-label="Operations planning inputs">
-      <div class="fp-top"><span>Operations Planning</span><button class="collapse" type="button" aria-expanded="true" aria-label="Minimize panel" title="Minimize panel"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 12.5 10 7.5 15 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
-      <div class="fp-sec">
+      <div class="fp-top"><h2 class="fp-title">Operations Planning</h2><button class="collapse" type="button" aria-expanded="true" aria-label="Minimize panel" title="Minimize panel"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 12.5 10 7.5 15 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      <div class="fp-sec" data-fold="open">
         <h4>1. Select Sites</h4>
         <div class="toggle t3" role="radiogroup" aria-label="How to choose sites">
           <label><input type="radio" name="pMode" value="loc" checked><span>Location</span></label>
@@ -221,7 +325,7 @@
         <button class="btn btn-outline" id="recOpen" type="button">Review recommended actions</button>
       </div>
 
-      <div class="fp-sec">
+      <div class="fp-sec" data-fold="open">
         <h4>2. Equipment &amp; Crews</h4>
         <label class="field"><span>Spray drone model <i class="info" tabindex="0" role="img" aria-label="Tank size and rated coverage rate of this drone set the number of refills and the spraying time." data-tip="Tank size and rated coverage rate of this drone set the number of refills and the spraying time.">i</i></span><select id="pDrone"></select></label>
         <div class="spec" id="droneSpec"></div>
@@ -239,7 +343,7 @@
         </div>
       </div>
 
-      <div class="fp-sec">
+      <div class="fp-sec" data-fold="closed" data-sum="ops">
         <h4>3. Operating Conditions</h4>
         <div class="grid2">
           <label class="field"><span>Start date <i class="info" tabindex="0" role="img" aria-label="First working day of the plan." data-tip="First working day of the plan.">i</i></span><input type="date" id="pDate" value="2026-11-02"></label>
@@ -253,7 +357,7 @@
         <input type="range" id="pEff" min="10" max="100" step="5" value="40">
       </div>
 
-      <div class="fp-sec">
+      <div class="fp-sec" data-fold="open">
         <h4>4. Run Optimization</h4>
         <div class="toggle" role="radiogroup" aria-label="Planning priority">
           <label><input type="radio" name="pObj" value="time" checked><span>Finish soonest</span></label>
@@ -267,7 +371,7 @@
 
     <!-- ---------- Plan results card (right) ---------- -->
     <aside class="result-card" id="planOut" hidden aria-label="Plan results">
-      <div class="rc-head"><span>Recommended Plan</span><button class="x" id="planClose" type="button" aria-label="Hide plan results">×</button></div>
+      <div class="rc-head"><span>Recommended Plan</span><button class="x" id="planClose" type="button" aria-label="Hide plan results"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button></div>
       <div class="rc-body">
         <p class="caveat">Routes come from a simple heuristic. The project's scheduling and routing model replaces it once the back end is connected.</p>
         <div class="warn" id="planWarn" hidden></div>
@@ -277,7 +381,7 @@
           <h3 class="sec-title">Timeline <i class="info" tabindex="0" role="img" aria-label="Each row is a crew: thin bars are driving, thick bars are work on a site. Press Play or drag the slider to move the crews along their routes. Zoom in on the map to see drone passes over weed patches and mower passes along the strip. Working hours only; nights are skipped." data-tip="Each row is a crew: thin bars are driving, thick bars are work on a site. Press Play or drag the slider to move the crews along their routes. Zoom in on the map to see drone passes over weed patches and mower passes along the strip. Working hours only; nights are skipped.">i</i></h3>
           <div class="gantt" id="gantt"></div>
           <div class="tl-ctrl">
-            <button class="btn btn-navy" id="tlPlay" type="button" aria-pressed="false">▶ Play</button>
+            <button class="btn btn-navy" id="tlPlay" type="button" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5v11l9-5.5-9-5.5Z"/></svg><span>Play</span></button>
             <input type="range" id="tlSlider" min="0" max="1" step="0.01" value="0" aria-label="Plan time">
             <select id="tlSpeed" aria-label="Playback speed"><option value="0.25">15 min/s</option><option value="0.5" selected>30 min/s</option><option value="1">1 h/s</option></select>
           </div>
@@ -294,7 +398,7 @@
 
     <!-- ---------- Recommendations card (right, planning): one recommended action per flagged site; the planner can change it ---------- -->
     <aside class="detail-card" id="recCard" hidden aria-label="Recommended actions">
-      <div class="dc-head"><span id="recTitle">Recommended actions</span><button class="x" id="recClose" type="button" aria-label="Close recommended actions">×</button></div>
+      <div class="dc-head"><span id="recTitle">Recommended actions</span><button class="x" id="recClose" type="button" aria-label="Close recommended actions"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button></div>
       <div class="dc-body">
         <p class="caveat">Each flagged site gets an action from the screening rules: spot spray weeds with a drone, mow turf, tall growth or weeds about to seed, and scout sites that are due for inspection. Change an action to override it; the plan uses your choice. ★ marks the recommended action.</p>
         <div class="stats s4" id="recSummary" role="group" aria-label="Show sites by action"></div>
@@ -306,7 +410,7 @@
     <!-- ---------- Site detail popup card ---------- -->
     <!-- ---------- Site list card (right): opened by Visualize; a site opens the detail card in the same place ---------- -->
     <aside class="detail-card" id="listCard" hidden aria-label="Site list">
-      <div class="dc-head"><span id="listTitle">Roadside sites</span><button class="x" id="listClose" type="button" aria-label="Close site list">×</button></div>
+      <div class="dc-head"><span id="listTitle">Roadside sites</span><button class="x" id="listClose" type="button" aria-label="Close site list"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button></div>
       <div class="dc-body">
         <div class="stats" id="statusSummary" role="group" aria-label="Show sites by status"></div>
         <ol class="site-list" id="siteList" aria-label="Sites"></ol>
@@ -317,7 +421,7 @@
       <div class="dc-head">
         <button class="back" id="dBack" type="button" aria-label="Back to site list" title="Back to site list"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <div class="dc-title"><div class="dc-route" id="dRoute"></div><div class="dc-id" id="dId"></div></div>
-        <button class="x" id="dClose" type="button" aria-label="Close site details">×</button>
+        <button class="x" id="dClose" type="button" aria-label="Close site details"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
       </div>
       <div class="dc-body" id="dBody"></div>
     </aside>
@@ -326,68 +430,180 @@
   <!-- ================= DRONES ================= -->
   <section class="page" id="view-drones" data-page="drones" hidden>
     <div class="page-inner">
-      <h1 class="page-h">Drone Technology</h1>
-      <p class="intro left">Spraying drone platforms evaluated for roadside vegetation control. The comparison covers payload, coverage rate, power, obstacle sensing, U.S. eligibility and cost. Tank capacity and rated coverage rate from this table feed the planning tool’s estimates of refill trips and working time.</p>
-      <h2 class="sec-h">Explore in 3D</h2>
-      <div class="viewer3d">
-        <div class="v3-side">
-          <div class="v3-tabs" role="tablist" aria-label="Drone model" id="v3Tabs"></div>
-          <div id="v3Info"></div>
-          <div class="checks">
-            <label><input type="checkbox" id="v3Spin" checked> Spin rotors</label>
-            <label><input type="checkbox" id="v3Auto" checked> Turn slowly</label>
-            <label><input type="checkbox" id="v3Spray"> Highlight spray system</label>
+      <div class="band page-head">
+        <div class="wrap">
+          <p class="eyebrow">Task 1.2 · Technology market survey</p>
+          <h1 class="page-h">Drone Technology</h1>
+          <p class="lead">Spraying drone platforms evaluated for roadside vegetation control: payload, coverage rate, power, obstacle sensing, U.S. eligibility and cost. Tank size and rated coverage from this survey feed the planning tool’s refill and working-time estimates.</p>
+        </div>
+      </div>
+
+      <div class="band">
+        <div class="wrap">
+          <h2 class="sec-h">Explore in 3D</h2>
+          <div class="viewer3d">
+            <div class="v3-side">
+              <div class="v3-tabs" role="tablist" aria-label="Drone model" id="v3Tabs"></div>
+              <div id="v3Info"></div>
+              <div class="checks">
+                <label><input type="checkbox" id="v3Spin" checked> Spin rotors</label>
+                <label><input type="checkbox" id="v3Auto" checked> Turn slowly</label>
+                <label><input type="checkbox" id="v3Spray"> Highlight spray system</label>
+              </div>
+              <p class="hint">Drag to turn the drone. Point at a part to name it. Grid squares are 0.5 m.</p>
+            </div>
+            <div class="v3-stage">
+              <canvas id="v3Canvas" aria-label="Interactive 3D model of the selected spray drone"></canvas>
+              <div class="v3-tip" id="v3Tip" hidden></div>
+              <div class="v3-load" id="v3Load">Loading 3D viewer…</div>
+            </div>
           </div>
-          <p class="hint">Drag to turn the drone. Point at a part to name it. Grid squares are 0.5 m.</p>
-        </div>
-        <div class="v3-stage">
-          <canvas id="v3Canvas" aria-label="Interactive 3D model of the selected spray drone"></canvas>
-          <div class="v3-tip" id="v3Tip" hidden></div>
-          <div class="v3-load" id="v3Load">Loading 3D viewer…</div>
+          <p class="note">Simplified models built in Blender to published dimensions (rotor count, prop size, tank and battery placement); not manufacturer CAD.</p>
         </div>
       </div>
-      <p class="note">Simplified models built in Blender to published dimensions (rotor count, prop size, tank and battery placement); not manufacturer CAD.</p>
 
-      <h2 class="sec-h">Specifications</h2>
-      <div class="tbl-wrap wide"><table class="market" id="marketTable"></table></div>
-      <p class="note">Specifications and list prices as published by each manufacturer; prices vary by configuration and dealer. Product images: Hylio and DJI.</p>
-
-      <h2 class="sec-h">Rules that shape operations</h2>
-      <div class="cards3">
-        <div class="card left"><h3>FAA Part 107</h3><p>Remote pilot certificate for commercial drone flights. Recurrent training every 24 months. Flights below 400 ft and within visual line of sight unless waived.</p></div>
-        <div class="card left"><h3>FAA Part 137</h3><p>Agricultural aircraft operator certificate, required to dispense herbicide from a drone. Spraying drones fly with a pilot and a visual observer, one pilot per drone.</p></div>
-        <div class="card left"><h3>Equipment eligibility</h3><p>NDAA-compliant, U.S.-available platforms are preferred. Foreign-made drones such as DJI are surveyed for comparison in case restrictions change. BVLOS rules (Part 108) are pending.</p></div>
+      <div class="band alt">
+        <div class="wrap">
+          <h2 class="sec-h">Specifications</h2>
+          <div class="tbl-wrap wide"><table class="market" id="marketTable"></table></div>
+          <p class="note">Specifications and list prices as published by each manufacturer; prices vary by configuration and dealer. Product images: Hylio and DJI.</p>
+        </div>
       </div>
-      <p class="note">Wind is a key constraint: many spraying drones operate safely only below about 6 m/s (13.5 mph), and Midwest winds often exceed that.</p>
+
+      <div class="band">
+        <div class="wrap">
+          <h2 class="sec-h">Rules that shape operations</h2>
+          <div class="cards3">
+            <div class="card left"><h3>FAA Part 107</h3><p>Remote pilot certificate for commercial drone flights. Recurrent training every 24 months. Flights below 400 ft and within visual line of sight unless waived.</p></div>
+            <div class="card left"><h3>FAA Part 137</h3><p>Agricultural aircraft operator certificate, required to dispense herbicide from a drone. Spraying drones fly with a pilot and a visual observer, one pilot per drone.</p></div>
+            <div class="card left"><h3>Equipment eligibility</h3><p>NDAA-compliant, U.S.-available platforms are preferred. Foreign-made drones such as DJI are surveyed for comparison in case restrictions change. BVLOS rules (Part 108) are pending.</p></div>
+          </div>
+          <p class="note">Wind is a key constraint: many spraying drones operate safely only below about 6 m/s (13.5 mph), and Midwest winds often exceed that.</p>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- ================= TEAM ================= -->
   <section class="page" id="view-team" data-page="team" hidden>
     <div class="page-inner">
-      <h1 class="page-h">Team</h1>
-      <p class="note" style="margin:0 0 8px">Names are placeholders in this preview and will be added once approved.</p>
-      <h2 class="sec-h">Research team · University of Illinois Urbana-Champaign</h2>
-      <div class="people">
-        <div class="person"><b>Researcher A</b><span>Principal Investigator, CEE</span></div>
-        <div class="person"><b>Researcher B</b><span>Postdoctoral Research Associate, CEE</span></div>
-        <div class="person"><b>Researcher C</b><span>Graduate Researcher, CEE</span></div>
+      <div class="band page-head">
+        <div class="wrap">
+          <p class="eyebrow">People and partners</p>
+          <h1 class="page-h">Team</h1>
+          <p class="lead">University of Illinois researchers build this portal and the research behind it, with the Illinois Department of Transportation and the twelve state DOTs of the AMT Phase 2 pooled fund.</p>
+          <dl class="kpi-row">
+            <div><dt>Member state DOTs</dt><dd>12</dd></div>
+            <div><dt>Research tasks</dt><dd>7</dd></div>
+            <div><dt>Project length</dt><dd>36 <small>months</small></dd></div>
+            <div><dt>Lead agency</dt><dd>INDOT</dd></div>
+          </dl>
+        </div>
       </div>
-      <h2 class="sec-h">Illinois Department of Transportation</h2>
-      <div class="people">
-        <div class="person"><b>IDOT Contact A</b><span>Project Champion</span></div>
-        <div class="person"><b>IDOT Contact B</b><span>Roadside Maintenance</span></div>
-        <div class="person"><b>IDOT Contact C</b><span>Roadside Maintenance</span></div>
+
+      <div class="band">
+        <div class="wrap">
+          <h2 class="sec-h">How the partnership works</h2>
+          <div class="partners">
+            <article class="partner">
+              <span class="p-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 9.5 12 5l10 4.5-10 4.5L2 9.5Z"/><path d="M6 11.5V16c0 1.4 2.7 3 6 3s6-1.6 6-3v-4.5"/><path d="M22 9.5V15"/></svg></span>
+              <h3>Research team</h3>
+              <p class="p-org">Civil and Environmental Engineering, University of Illinois Urbana-Champaign</p>
+              <p>Runs the research: market and regulation reviews, cost–benefit analysis, field experiments, and the screening and planning tools in this portal.</p>
+              <ul class="p-tags"><li>Tasks 1–7</li><li>This portal</li></ul>
+            </article>
+            <article class="partner">
+              <span class="p-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 3 4 21M16 3l4 18"/><path d="M12 4v3m0 3.5v3m0 3.5v3"/></svg></span>
+              <h3>Illinois DOT</h3>
+              <p class="p-org">Supporting agency</p>
+              <p>A project champion and roadside maintenance specialists advise on current practice, equipment and what field crews need.</p>
+              <ul class="p-tags"><li>Project champion</li><li>Roadside maintenance</li></ul>
+            </article>
+            <article class="partner">
+              <span class="p-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20V6.5Z"/><path d="M9 4v13.5M15 6.5V20"/></svg></span>
+              <h3>AMT Phase 2 pooled fund</h3>
+              <p class="p-org">TPF-5(559), led by Indiana DOT</p>
+              <p>Twelve state DOTs fund and steer the work through steering meetings and quarterly progress reports. Results are shared with every member.</p>
+              <ul class="p-tags"><li>12 states</li><li>Steering</li></ul>
+            </article>
+          </div>
+        </div>
       </div>
-      <h2 class="sec-h">AMT Phase 2 Pooled Fund</h2>
-      <div class="people">
-        <div class="person"><b>Chair A</b><span>Lead agency</span></div>
-        <div class="person"><b>Chair B</b><span>Lead research institution</span></div>
+
+      <div class="band alt">
+        <div class="wrap">
+          <div class="people-head">
+            <h2 class="sec-h">People</h2>
+            <p class="note">Names from the AMT project meeting slides, August 4, 2026.</p>
+          </div>
+          <h3 class="grp-h"><i class="grp-dot uiuc" aria-hidden="true"></i>Research team · University of Illinois Urbana-Champaign</h3>
+          <div class="people">
+            <div class="person"><span class="avatar" aria-hidden="true">YO</span><div class="p-txt"><b>Yanfeng Ouyang</b><span>Principal Investigator</span><small>Civil and Environmental Engineering</small></div></div>
+            <div class="person"><span class="avatar" aria-hidden="true">CB</span><div class="p-txt"><b>Caio Vitor Beojone</b><span>Postdoctoral Research Associate</span><small>Civil and Environmental Engineering</small></div></div>
+            <div class="person"><span class="avatar" aria-hidden="true">RH</span><div class="p-txt"><b>Run Hu</b><span>Graduate Researcher</span><small>Civil and Environmental Engineering</small></div></div>
+          </div>
+          <h3 class="grp-h"><i class="grp-dot idot" aria-hidden="true"></i>Illinois Department of Transportation</h3>
+          <div class="people idot">
+            <div class="person"><span class="avatar" aria-hidden="true">MA</span><div class="p-txt"><b>Meiwu An</b><span>Project Champion · Traffic Operations Engineer</span><small>Illinois DOT</small></div></div>
+            <div class="person"><span class="avatar" aria-hidden="true">SH</span><div class="p-txt"><b>Scott J. Hall</b><span>Roadside Maintenance Manager</span><small>Illinois DOT</small></div></div>
+            <div class="person"><span class="avatar" aria-hidden="true">JS</span><div class="p-txt"><b>James Schackmann</b><span>Roadside Maintenance Resource Specialist</span><small>Illinois DOT</small></div></div>
+          </div>
+          <h3 class="grp-h"><i class="grp-dot fund" aria-hidden="true"></i>Pooled fund chairs</h3>
+          <div class="people fund">
+            <div class="person"><span class="avatar" aria-hidden="true">ML</span><div class="p-txt"><b>Michael Lane</b><span>Chair · lead agency</span><small>AMT Phase 2 pooled fund</small></div></div>
+            <div class="person"><span class="avatar" aria-hidden="true">YF</span><div class="p-txt"><b>Yiheng Feng</b><span>Chair · lead research institution</span><small>AMT Phase 2 pooled fund</small></div></div>
+          </div>
+        </div>
       </div>
-      <p class="note">Member agencies: California, Colorado, Illinois, Indiana, Kansas, Michigan, Minnesota, Missouri, Mississippi, North Dakota, Pennsylvania and Texas.</p>
+
+      <div class="band">
+        <div class="wrap members">
+          <div class="m-txt">
+            <h2 class="sec-h">Member agencies</h2>
+            <p>The pooled fund is led by Indiana DOT with 11 other state agencies. Guidelines and decision-support tools from this project are shared with all of them.</p>
+            <ul class="map-legend">
+              <li><i class="lg lead" aria-hidden="true"></i>Lead agency</li>
+              <li><i class="lg member" aria-hidden="true"></i>Member</li>
+              <li><i class="lg uiuc" aria-hidden="true"></i>University of Illinois</li>
+            </ul>
+            <div class="state-chips" id="stateChips"></div>
+          </div>
+          <div class="usmap" id="usMap" role="img" aria-label="Map of the 12 member states: California, Colorado, Illinois, Indiana (lead agency), Kansas, Michigan, Minnesota, Mississippi, Missouri, North Dakota, Pennsylvania and Texas">
+            <div class="map-load">Loading map…</div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
+
+<!-- Footer for the reading pages (Home, Drone Technology, Team); js/pages.js adds a copy to each -->
+<template id="footTpl">
+  <footer class="site-foot">
+    <div class="wrap sf-grid">
+      <div class="sf-col">
+        <b>Roadside Vegetation Portal</b>
+        <span>Department of Civil and Environmental Engineering, University of Illinois Urbana-Champaign</span>
+        <span>AMT Phase 2 Pooled Fund, TPF-5(559)</span>
+      </div>
+      <div class="sf-col">
+        <b>Pages</b>
+        <a href="#veg" data-view="veg">Vegetation Information</a>
+        <a href="#plan" data-view="plan">Operations Planning</a>
+        <a href="#drones" data-view="drones">Drone Technology</a>
+        <a href="#team" data-view="team">Team</a>
+      </div>
+      <div class="sf-col">
+        <b>Data</b>
+        <span>Roads: FHWA HPMS 2024, NHS 2021</span>
+        <span>Mileposts and maintenance yards: IDOT</span>
+        <span>Basemaps and imagery: Esri</span>
+        <span>Photos: Wikimedia Commons (credits on Home)</span>
+      </div>
+      <p class="sf-note">Research prototype. Vegetation, inspection and control records are example data, not for operational use.</p>
+    </div>
+  </footer>
+</template>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
@@ -395,5 +611,6 @@
 <!-- loader.js shows the progress ring, loads Leaflet and data/*.js, then starts js/app.js -->
 <script src="js/loader.js"></script>
 <script src="js/drones3d.js"></script>
+<script src="js/team.js"></script>
 </body>
 </html>

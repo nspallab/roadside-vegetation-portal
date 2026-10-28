@@ -27,11 +27,11 @@ The header uses a placeholder mark. To use the official University of Illinois B
 
 | Page | Purpose |
 |---|---|
-| **Home** | Project overview, research flow (Tasks 1–7), project facts. |
+| **Home** | Hero with the main actions, a live snapshot of the demo network (sites, miles, acres, sites needing control), what the portal does, how it works (collect → screen → recommend → plan), research flow (Tasks 1–7), demo areas and project facts. Reading pages share a footer with data sources. |
 | **Vegetation Information** | Roadside sites in both demo areas (Champaign–Urbana and Chicago), shown together. Zoom in to see each site's roadside vegetation area (the 30 ft right-of-way strip) and, closer still, the weed patches inside it. Click a segment or area for vegetation type, height, cover, growth stage, a priority score, a ground photo and a drone view (satellite imagery of the site with its strip and patches), and the inspection and control history. Add records (optionally with a new height, cover or stage), attach photos, upload field updates as CSV or GeoJSON (rows with a `site_id` update that site and add records; the template button gives an example), export the site layer, and screen the network with adjustable triggers. The site list ranks flagged sites by priority. |
 | **Operations Planning** | Choose the sites by location (state → county → route, or all routes), by drawing an area on the map, or by picking sites. The Recommended actions card lists each flagged site with its action (drone spot spraying, mowing or further inspection) and reason; the planner can change or drop any of them. Crews start from IDOT maintenance yards (or a place you put on the map). Other inputs: drone model, number of crews, work hours, wind and spray volume. Outputs: routes on the map, schedule, duration and herbicide use, plus a timeline (Gantt chart and Play slider) that moves each crew along its route. Zoomed in, the map shows the drone's spray passes over the weed patches and the mower's passes along the strip. Exports schedule (CSV) and routes (GeoJSON). |
 | **Drone Technology** | Interactive 3D models of the three spray drones (drag to turn, spinning rotors, spray-system highlight, part names on hover), the market survey table (Task 1.2) and key FAA rules. |
-| **Team** | Research team, IDOT contacts, pooled fund chairs. |
+| **Team** | How the partnership works (research team, IDOT, pooled fund), people grouped by organization (names from the AMT project meeting slides, August 4, 2026), and a map of the 12 pooled fund member states with Indiana DOT as lead agency. |
 
 ## Files
 
@@ -42,17 +42,22 @@ js/app.js           map, screening rules, planning heuristic
 js/pages.js         loads first: switches the simple pages, builds the drone table (drone specs live here)
 js/loader.js        progress ring; loads Leaflet and the data files, then js/app.js
 js/drones3d.js      3D drone viewer; loads three.js only when the Drone Technology page opens
+js/team.js          member-state map on the Team page; loads data/us_states.js only when the page opens
 data/data.js        sites (Champaign + Chicago), routing network, mileposts (generated)
 data/hpms.js        HPMS 2024 highway network layer (generated)
 data/us_interstates.js  national interstate overview + route search index (generated)
+data/us_states.js   lower-48 state outlines for the Team map (generated)
 img/vegetation/     illustrations (photos are linked from Wikimedia Commons)
 img/drones/         product images for the Drone Technology page
 img/drones/3d/      3D drone models (.glb), built by tools/gen_drones_blender.py
+img/hero-drone.webp Home page hero image (ARES model render, tools/render_hero.py)
 lib/leaflet/        Leaflet 1.9.4 map library (local copy)
 lib/three/          three.js r147 with GLTFLoader and OrbitControls (local copy, MIT)
 tools/gen_data.py   regenerates data/data.js, data/hpms.js, data/us_interstates.js
 tools/gen_drones_blender.py  regenerates img/drones/3d/*.glb in Blender
-gis_source_data/    source GIS files (FHWA HPMS 2024, FHWA NHS 2021, IDOT mileposts, IDOT maintenance yards) used by gen_data.py
+tools/render_hero.py         renders the Home hero image from the ARES model in Blender
+tools/gen_us_states.py       regenerates data/us_states.js
+gis_source_data/    source GIS files (FHWA HPMS 2024, FHWA NHS 2021, IDOT mileposts, IDOT maintenance yards, Census state boundaries)
 ```
 
 ## Data
@@ -62,6 +67,7 @@ gis_source_data/    source GIS files (FHWA HPMS 2024, FHWA NHS 2021, IDOT milepo
   - Interstate mileposts: IDOT IL Milepost layer (`gis_source_data/Mileposts_IDOT`). Sites on I-74 and I-57 are cut at real mileposts (e.g. I-74 EB, MP 181–182). US-45 has no milepost signs, so its sites use IDOT county log miles.
   - Crew staging areas: IDOT maintenance yards from the IDOT district facilities layer (`gis_source_data/IDOT_Facilities`), e.g. 543 Champaign (201 Eisner Road) and E34 Interstate 57 (Markham).
   - Drone view imagery: Esri World Imagery, standing in for the project's drone orthomosaics.
+  - State outlines on the Team page: Census TIGERweb (generalized), `gis_source_data/Census_States`.
   - Drone specifications: the project's market survey.
 - **Example data:** vegetation, inspection and control history, and herbicide rates. Replace these when IDOT or field data arrives.
 - **Illustrative:** weed patch outlines (their total area matches each site's weed cover), drone spray swaths (a planning assumption shown in the drone table), coverage paths and the priority score weights.
@@ -80,6 +86,10 @@ To regenerate the 3D drone models (Blender 4.x):
 ```bash
 blender -b --factory-startup --python tools/gen_drones_blender.py -- img/drones/3d
 ```
+
+## Design
+
+The navy header band and orange navigation bar use the University of Illinois colours and stay as they are. Reading pages (Home, Drone Technology, Team) are full width: each section is a band across the window with its content in a centred column up to 1440 px. Elsewhere, orange text and filled buttons use UIUC Altgeld orange (`--orange-ink`, #C84113, 4.97:1 on white) so they meet WCAG AA contrast; Illini Orange stays for accents. Fonts are Montserrat (headings) and Source Sans 3 (body). Interactive targets are at least 24 px, focus rings are visible, a skip link appears on keyboard focus, and motion respects reduced-motion settings.
 
 ## Photos
 

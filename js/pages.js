@@ -15,6 +15,16 @@
   }
   window.addEventListener("hashchange", show);
   show();
+  // shared footer on each reading page
+  const foot = document.getElementById("footTpl");
+  if (foot) document.querySelectorAll(".page .page-inner").forEach((p) => p.after(foot.content.cloneNode(true)));
+  // skip link: focus the visible page (the hash is the page router, so it must not change)
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-skip]")) return;
+    e.preventDefault();
+    const target = document.querySelector(".page:not([hidden]) h1, .float-panel:not([hidden]) .fp-top") || document.getElementById("main");
+    target.setAttribute("tabindex", "-1"); target.focus();
+  });
   window.DRONES = [
     {
       "id": "ares",

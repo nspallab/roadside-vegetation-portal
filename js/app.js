@@ -464,7 +464,8 @@
     renderSummary();
     renderActivity();
     renderAreas();
-    if (state.view === "plan") renderRecs();
+    if (state.view === "plan") { renderRecs(); syncPlanReady(); }
+    fillSnapshot();
   }
 
   function renderActivity() {
@@ -494,7 +495,7 @@
     $("listTitle").textContent = STATUS[state.listStatus].label + " · " + list.length + " site" + (list.length === 1 ? "" : "s") + (route === "all" ? "" : " on " + route);
     $("siteList").innerHTML = list.map((s) =>
       '<li data-id="' + s.id + '" tabindex="0">' + shield(s.route) + '<div><div class="sid">' + esc(s.route + " " + s.dir + " · " + s.label) + (s._updated ? ' <span class="new">updated</span>' : "") + "</div><div class=\"why\">" +
-      esc(s._ev.reasons.join(" · ")) + "</div></div>" + (s._pri.score ? priBadge(s._pri.score) : "") + '<span class="go" aria-hidden="true">›</span></li>').join("") || '<li class="empty">No sites in this group at these limits.</li>';
+      esc(s._ev.reasons.join(" · ")) + "</div></div>" + (s._pri.score ? priBadge(s._pri.score) : "") + '<span class="go" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m8 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></li>').join("") || '<li class="empty">No sites in this group at these limits.</li>';
   }
   $("statusSummary").addEventListener("click", (e) => { const t = e.target.closest(".stat"); if (!t) return; state.listStatus = t.dataset.st; renderSummary(); $("siteList").scrollTop = 0; });
   $("siteList").addEventListener("click", (e) => { const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); });
@@ -947,12 +948,12 @@
     drawGantt();
   }
   function drawGantt() {
-    const T = state.tl, U = state.plan.units, W = 352, LBL = 74, ROW = 20, TOP = 18, H = TOP + U.length * ROW + 6;
+    const T = state.tl, U = state.plan.units, W = 352, LBL = 78, ROW = 22, TOP = 20, H = TOP + U.length * ROW + 6;
     const x = (v) => (LBL + (W - LBL - 4) * v / T.total).toFixed(1);
     let s = '<svg viewBox="0 0 ' + W + " " + H + '" id="ganttSvg" role="img" aria-label="Crew schedule chart">';
     for (let d = 0; d < T.days; d++) {
-      s += '<line x1="' + x(d * T.span) + '" x2="' + x(d * T.span) + '" y1="12" y2="' + H + '" class="g-day"/>' +
-        (T.days <= 6 || d % Math.ceil(T.days / 6) === 0 ? '<text x="' + (+x(d * T.span) + 3) + '" y="10" class="g-lbl">' + esc(dayDate(state.plan.p.date, d + 1)) + "</text>" : "");
+      s += '<line x1="' + x(d * T.span) + '" x2="' + x(d * T.span) + '" y1="14" y2="' + H + '" class="g-day"/>' +
+        (T.days <= 6 || d % Math.ceil(T.days / 6) === 0 ? '<text x="' + (+x(d * T.span) + 3) + '" y="11" class="g-lbl">' + esc(dayDate(state.plan.p.date, d + 1)) + "</text>" : "");
     }
     U.forEach((u, i) => {
       const y = TOP + i * ROW;
@@ -964,7 +965,7 @@
           : '<rect x="' + x(v0) + '" y="' + (y + 3) + '" width="' + w.toFixed(1) + '" height="13" rx="1.5" fill="' + u.color + '"' + (u.hold ? ' class="g-hold"' : "") + "/>";
       });
     });
-    s += '<line id="gCursor" x1="' + LBL + '" x2="' + LBL + '" y1="12" y2="' + H + '" class="g-cursor"/></svg>';
+    s += '<line id="gCursor" x1="' + LBL + '" x2="' + LBL + '" y1="14" y2="' + H + '" class="g-cursor"/></svg>';
     $("gantt").innerHTML = s;
     T.x = (v) => +x(v); T.fromX = (px) => Math.max(0, Math.min(T.total, (px - LBL) / (W - LBL - 4) * T.total));
   }
@@ -992,12 +993,14 @@
     crewMarkers.forEach(({ u, m }) => { const at = crewAt(u, v); m.setLatLng(at.ll); const el = m.getElement(); if (el) el.firstChild.dataset.kind = at.kind; });
     stopMarkers.forEach(({ m, v: done }) => { const el = m.getElement(); if (el) el.firstChild.classList.toggle("done", v >= done); });
   }
-  function stopPlay() { if (playT) cancelAnimationFrame(playT); playT = null; $("tlPlay").textContent = "▶ Play"; $("tlPlay").setAttribute("aria-pressed", "false"); }
+  const PLAY_HTML = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5v11l9-5.5-9-5.5Z"/></svg><span>Play</span>';
+  const PAUSE_HTML = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 4h3v12h-3zM11.5 4h3v12h-3z"/></svg><span>Pause</span>';
+  function stopPlay() { if (playT) cancelAnimationFrame(playT); playT = null; $("tlPlay").innerHTML = PLAY_HTML; $("tlPlay").setAttribute("aria-pressed", "false"); }
   $("tlPlay").addEventListener("click", () => {
     if (playT) { stopPlay(); return; }
     const T = state.tl; if (!T) return;
     if (T.v >= T.total) T.v = 0;
-    $("tlPlay").textContent = "❚❚ Pause"; $("tlPlay").setAttribute("aria-pressed", "true");
+    $("tlPlay").innerHTML = PAUSE_HTML; $("tlPlay").setAttribute("aria-pressed", "true");
     let last = performance.now();
     const step = (now) => {
       setPlanTime(T.v + (now - last) / 1000 * +$("tlSpeed").value); last = now;
@@ -1360,17 +1363,23 @@
     if (!picked.length) return { ok: false, mode, msg: "Pick at least one site on the map." };
     return { ok: true, mode, region: picked[0].region, filter: (s) => state.picked.has(s.id) };
   }
+  // Generate Plan is enabled only when the selection has flagged sites; rerun after every screening (thresholds, overrides, uploads)
+  function syncPlanReady() {
+    const sel = planSel();
+    const flagged = sel.ok ? D.sites.filter((s) => s._rec && s.region === sel.region && sel.filter(s)).length : 0;
+    $("pRun").disabled = !sel.ok || !flagged;
+    $("pReady").hidden = sel.ok && flagged > 0;
+    $("pReady").textContent = !sel.ok ? sel.msg : flagged ? "" : "No flagged sites in this selection.";
+    return { sel, flagged };
+  }
   function onPlanAreaChange(fit) {
     const sel = planSel();
     if (state.plan) { state.plan = null; state.tl = null; stopPlay(); planLayer.clearLayers(); coverLayer.clearLayers(); $("planOut").hidden = true; } // selection changed: old plan no longer applies
     if (state.view === "plan" && sel.ok && $("drawer").hidden) $("recCard").hidden = false;
     if (sel.ok) setRegion(sel.region);
-    const flagged = sel.ok ? D.sites.filter((s) => s._rec && s.region === sel.region && sel.filter(s)).length : 0;
-    $("pRun").disabled = !sel.ok || !flagged;
-    $("pReady").hidden = sel.ok && flagged > 0;
-    $("pReady").textContent = !sel.ok ? sel.msg : flagged ? "" : "No flagged sites in this selection.";
+    renderSites(); // screens the sites first, so the flagged count below is current
+    const { flagged } = syncPlanReady();
     if (sel.mode === "draw" && drawPoly) $("drawNote").textContent = sel.ok ? flagged + " flagged site(s) inside this area." : sel.msg;
-    renderSites();
     if (fit && sel.ok && sel.mode !== "pick") {
       const pts = D.sites.filter((s) => s.region === sel.region && sel.filter(s)).flatMap((s) => [s.coords[0], s.coords[s.coords.length - 1]]);
       if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.08), fitPad());
@@ -1392,7 +1401,7 @@
       '<li data-id="' + s.id + '">' + shield(s.route) + '<div tabindex="0"><div class="sid">' + esc(s.route + " " + s.dir + " · " + s.label) + '</div><div class="why">' +
       esc(s._rec ? s._rec.why : "Left out of the plan by the planner") + "</div></div>" + priBadge(s._pri.score) +
       '<select data-id="' + s.id + '" aria-label="Action for ' + esc(s.id) + '" class="act-sel' + (overrides[s.id] ? " changed" : "") + '">' +
-      ["spray", "mow", "inspect", "skip"].map((a) => '<option value="' + a + '"' + (key(s) === a ? " selected" : "") + ">" + (a === "skip" ? "Leave out" : ACTION[a].label) + (a === s._auto.action ? " ★" : "") + "</option>").join("") +
+      ["spray", "mow", "inspect", "skip"].map((a) => '<option value="' + a + '"' + (key(s) === a ? " selected" : "") + ">" + (a === "skip" ? "Leave out" : ACTION[a].label) + (a === s._auto.action ? " (recommended)" : "") + "</option>").join("") +
       "</select></li>").join("") || '<li class="empty">' + (sel.ok ? "No flagged sites in this group." : esc(sel.msg)) + "</li>";
   }
   function showRecs() { $("drawer").hidden = true; state.selected = null; $("planOut").hidden = true; $("recCard").hidden = false; renderSites(); }
@@ -1576,7 +1585,46 @@
     ' <span class="muted">(' + esc(k.replace("/", ": ")) + ")</span></li>").join("") +
     '<li class="muted">Height and cover schematics are drawn by the portal.</li>';
 
+  /* ---- Home page snapshot of the demo network (status at the current screening limits) ---- */
+  function fillSnapshot() {
+    const th = thresholds(), put = (k, v) => { const el = document.querySelector('#snapshot [data-k="' + k + '"]'); if (el) el.textContent = v; };
+    const n = (v) => Math.round(v).toLocaleString("en-US");
+    put("sites", n(D.sites.length));
+    put("miles", n(D.sites.reduce((a, s) => a + s.length_mi, 0) / 2)); // one site per direction
+    put("acres", n(D.sites.reduce((a, s) => a + s.area_ac, 0)));
+    put("control", n(D.sites.filter((s) => (s._ev || evaluate(s, th)).status === "control").length));
+    put("yards", n(D.depots.filter((d) => !d.custom).length));
+    put("drones", n(D.drones.length));
+  }
+
+  /* ---- Collapsible panel sections (data-fold="open|closed"); a folded section shows a one-line summary ---- */
+  const FOLD_SUM = {
+    loc: () => ($("locState").value ? $("locState").selectedOptions[0].textContent + ($("locCounty").value ? ", " + $("locCounty").selectedOptions[0].textContent : "") : "Demo areas"),
+    layers: () => { const c = [...$("panel-veg").querySelectorAll('[data-sum="layers"] input[type="checkbox"]')]; return c.filter((x) => x.checked).length + " of " + c.length + " on"; },
+    ops: () => dayDate($("pDate").value, 1) + " · " + $("pStart").value + " · " + $("pHours").value + " h · wind " + $("pWind").value + " mph",
+  };
+  const FOLD_SVG = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function syncFoldSums() { document.querySelectorAll(".fp-sec[data-sum]").forEach((sec) => { sec.querySelector(".fold-sum").textContent = FOLD_SUM[sec.dataset.sum](); }); }
+  document.querySelectorAll(".fp-sec[data-fold]").forEach((sec, i) => {
+    const h = sec.querySelector(":scope > h4"); if (!h) return;
+    const body = [...sec.children].filter((c) => c !== h);
+    body.forEach((c, j) => { if (!c.id) c.id = "fold" + i + "_" + j; });
+    if (sec.dataset.sum) h.insertAdjacentHTML("beforeend", '<span class="fold-sum"></span>');
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "fold"; b.innerHTML = FOLD_SVG;
+    b.setAttribute("aria-controls", body.map((c) => c.id).join(" "));
+    const set = (open) => { sec.classList.toggle("folded", !open); b.setAttribute("aria-expanded", String(open)); b.setAttribute("aria-label", (open ? "Collapse " : "Expand ") + h.firstChild.textContent.trim()); };
+    b.addEventListener("click", () => set(sec.classList.contains("folded")));
+    h.addEventListener("click", (e) => { if (!e.target.closest(".info, .fold")) b.click(); }); // the whole heading toggles; the button is the keyboard control
+    h.appendChild(b);
+    set(sec.dataset.fold !== "closed");
+  });
+  ["locState", "locCounty", "pDate", "pStart", "pHours", "pWind"].forEach((id) => $(id).addEventListener("change", syncFoldSums));
+  $("panel-veg").querySelectorAll('[data-sum="layers"] input').forEach((c) => c.addEventListener("change", syncFoldSums));
+
   syncOutputs();
+  syncFoldSums();
+  fillSnapshot();
   renderPatches();
   setView((location.hash || "#home").slice(1));
   onPlanAreaChange();
