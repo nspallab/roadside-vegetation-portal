@@ -47,24 +47,25 @@ data/us_interstates.js  national interstate overview + route search index (gener
 img/vegetation/     illustrations (photos are linked from Wikimedia Commons)
 img/drones/         product images for the Drone Technology page
 lib/leaflet/        Leaflet 1.9.4 map library (local copy)
-tools/gen_data.py   regenerates data/data.js
+tools/gen_data.py   regenerates data/data.js, data/hpms.js, data/us_interstates.js
+gis_source_data/    source GIS files (FHWA HPMS 2024, FHWA NHS 2021, IDOT mileposts) used by gen_data.py
 ```
 
 ## Data
 
 - **Real:**
-  - Road network, lanes, speed limits and traffic (AADT): FHWA HPMS 2024, Champaign and Cook counties (`08_GIS_Data/Highways_HPMS_2024_Illinois`).
-  - Interstate mileposts: IDOT IL Milepost layer (`08_GIS_Data/Mileposts_IDOT`). Sites on I-74 and I-57 are cut at real mileposts (e.g. I-74 EB, MP 181–182). US-45 has no milepost signs, so its sites use IDOT county log miles.
+  - Road network, lanes, speed limits and traffic (AADT): FHWA HPMS 2024, Champaign and Cook counties (`gis_source_data/Highways_HPMS_2024_Illinois`).
+  - Interstate mileposts: IDOT IL Milepost layer (`gis_source_data/Mileposts_IDOT`). Sites on I-74 and I-57 are cut at real mileposts (e.g. I-74 EB, MP 181–182). US-45 has no milepost signs, so its sites use IDOT county log miles.
   - Drone specifications: the project's market survey.
 - **Example data:** vegetation, inspection and control history, and herbicide rates. Replace these when IDOT or field data arrives.
 - Demo regions:
   - Champaign–Urbana: I-74 (MP 169–197), I-57 (MP 218–257), US-45 north and south. 192 sites.
   - Chicago area (Cook County): I-55 (MP 276–294), I-57 (MP 338–358), I-80 (MP 149–163). 100 sites.
 - Anywhere else in the U.S.: choose a state/county or search an interstate; road detail loads from FHWA when you zoom in.
-- To regenerate the data (from the project root):
+- To regenerate the data (from the repository root; the output is identical to the files in `data/`):
 
 ```bash
-python 05_Website_Prototype/tools/gen_data.py 08_GIS_Data 05_Website_Prototype/data
+python tools/gen_data.py gis_source_data data
 ```
 
 ## Photos

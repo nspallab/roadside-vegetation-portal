@@ -1,13 +1,13 @@
 """Generate demo data for the Roadside Vegetation Portal (multi-region).
 
-REAL inputs (from 08_GIS_Data):
+REAL inputs (from gis_source_data/ in the repository; 08_GIS_Data in the project Box folder):
   - FHWA HPMS 2024 Illinois: Champaign County (f_system 1-4) and statewide interstates/freeways (f_system 1-2)
   - IDOT IL Milepost (2021-22 LiDAR sign inventory)
   - FHWA/BTS NHS 2021 US interstates (for the national overview layer and route index)
 SYNTHETIC: vegetation, inspection and control records (example data for the prototype).
 
 Usage:
-  python gen_data.py <08_GIS_Data dir> <out data dir>
+  python tools/gen_data.py gis_source_data data      (from the repository root)
 Writes data.js (window.VEG_DATA), hpms.js (window.HPMS_BG), us_interstates.js (window.US_INTERSTATES).
 """
 import json, math, random, datetime as dt, sys, statistics, collections, os, re

@@ -1,0 +1,4 @@
+# Files Cloudflare should not publish if this repository is ever deployed directly
+gis_source_data/
+tools/
+.gitignore
