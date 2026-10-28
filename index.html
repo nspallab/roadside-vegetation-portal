@@ -41,7 +41,7 @@
 <main id="main" tabindex="-1">
 
   <!-- ================= HOME ================= -->
-  <!-- Reading pages are full width: each .band spans the window, .wrap holds the content (max 1280 px) -->
+  <!-- Reading pages are full width: each .band spans the window, .wrap holds the content (max 1440 px) -->
   <section class="page" id="view-home" data-page="home" hidden>
     <div class="page-inner home">
       <div class="band hero-band">
@@ -49,7 +49,7 @@
           <div class="hero-txt">
             <p class="eyebrow">AMT Phase 2 Pooled Fund · TPF-5(559)</p>
             <h1 class="hero-h">Roadside vegetation, mapped and managed</h1>
-            <p class="hero-lead">A GIS portal for <b>drone-based herbicide spraying</b> along state highways. Track roadside vegetation, screen the network for sites that need control, and plan <b>drone spraying, mowing and inspection</b> crews with time and herbicide estimates.</p>
+            <p class="hero-lead">Track roadside vegetation, find the sites that need control, and plan <b>drone spraying, mowing and inspection</b> crews along state highways.</p>
             <div class="hero-cta">
               <a class="btn btn-orange btn-lg" href="#veg" data-view="veg">Open the vegetation map</a>
               <a class="btn btn-outline btn-lg" href="#plan" data-view="plan">Plan operations</a>
@@ -75,84 +75,32 @@
           <div class="snap"><b data-k="miles"></b><span>Highway miles</span></div>
           <div class="snap"><b data-k="acres"></b><span>Right-of-way acres</span></div>
           <div class="snap alert"><b data-k="control"></b><span>Need control now</span></div>
-          <div class="snap"><b data-k="yards"></b><span>IDOT yards for staging</span></div>
-          <div class="snap"><b data-k="drones"></b><span>Spray drones compared</span></div>
         </div>
-        <p class="note snap-note">Demo areas: Champaign–Urbana and Chicago (Cook County). Road data is real; vegetation records are example data.</p>
       </div>
 
       <div class="band">
         <div class="wrap">
-          <h2 class="sec-h">What the portal does</h2>
-          <div class="features">
+          <h2 class="sec-h">Explore</h2>
+          <div class="features three">
             <a class="feature" href="#veg" data-view="veg">
               <span class="f-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 3 7.5l9 4.5 9-4.5L12 3Z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></span>
               <h3>Vegetation information</h3>
-              <p>Roadside areas with species, height, weed cover, growth stage, ground and drone images, and the full inspection and control history.</p>
+              <p>Roadside areas, conditions, ground and drone images, and control history.</p>
               <span class="f-go">Explore the map <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
             </a>
             <a class="feature" href="#plan" data-view="plan">
               <span class="f-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/></svg></span>
               <h3>Operations planning</h3>
-              <p>Recommended action for every flagged site, crew routes from IDOT yards, a day-by-day timeline, duration and herbicide use.</p>
+              <p>Recommended actions, crew routes, a day-by-day timeline and herbicide use.</p>
               <span class="f-go">Plan a day <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
             </a>
             <a class="feature" href="#drones" data-view="drones">
               <span class="f-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="5" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="m7 7 3 3m7-3-3 3m-7 7 3-3m7 3-3-3"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg></span>
               <h3>Drone technology</h3>
-              <p>Spraying drones from the market survey in 3D, side-by-side specifications, and the FAA rules that shape operations.</p>
+              <p>Spray drones in 3D, specifications and the FAA rules that apply.</p>
               <span class="f-go">Compare drones <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
             </a>
-            <div class="feature soon">
-              <span class="f-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5v-15Z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M8 7h8M8 11h6"/></svg></span>
-              <h3>Operational guidelines <span class="tag">Task 7</span></h3>
-              <p>Equipment, licensing and step-by-step guidance so DOTs can add drones to their vegetation programs.</p>
-              <span class="f-go muted">Coming with the final report</span>
-            </div>
           </div>
-        </div>
-      </div>
-
-      <div class="band alt">
-        <div class="wrap">
-          <h2 class="sec-h">How it works</h2>
-          <ol class="steps">
-            <li><span class="st-n" aria-hidden="true">1</span><div><h3>Collect</h3><p>Drone and ground inspections record vegetation type, height, weed cover and growth stage. Field crews upload updates as CSV or GeoJSON.</p></div></li>
-            <li><span class="st-n" aria-hidden="true">2</span><div><h3>Screen</h3><p>Adjustable triggers flag the sites that need control and rank them by priority: height, weed cover, sight distance, traffic and time since inspection.</p></div></li>
-            <li><span class="st-n" aria-hidden="true">3</span><div><h3>Recommend</h3><p>Each flagged site gets an action: drone spot spraying, mowing or further inspection. Planners can change any of them.</p></div></li>
-            <li><span class="st-n" aria-hidden="true">4</span><div><h3>Plan</h3><p>Crews are routed from IDOT maintenance yards. The timeline plays the work day with travel, work time and herbicide use.</p></div></li>
-          </ol>
-        </div>
-      </div>
-
-      <div class="band">
-        <div class="wrap">
-          <h2 class="sec-h">Research flow</h2>
-          <div class="flow" role="list">
-            <div class="flow-col" role="listitem">
-              <div class="flow-phase">Phase 1 · 2026–27</div>
-              <div class="flow-box"><b>Task 1</b>Literature, regulation &amp; technology market survey</div>
-              <div class="flow-box"><b>Task 2</b>Cost–benefit analysis</div>
-            </div>
-            <div class="flow-arrow" aria-hidden="true"></div>
-            <div class="flow-col" role="listitem">
-              <div class="flow-phase">Phase 2 · 2027–28</div>
-              <div class="flow-box"><b>Task 5</b>Field experiments &amp; drone spray demonstrations</div>
-              <div class="flow-box"><b>Task 6</b>Operational prototype with partner DOTs</div>
-            </div>
-            <div class="flow-arrow" aria-hidden="true"></div>
-            <div class="flow-col" role="listitem">
-              <div class="flow-phase">Phase 3 · 2028–29</div>
-              <div class="flow-box hl"><b>Task 3</b>GIS-based information tool (digital twin)</div>
-              <div class="flow-box hl"><b>Task 4</b>Scheduling &amp; route planning tool</div>
-            </div>
-            <div class="flow-arrow" aria-hidden="true"></div>
-            <div class="flow-col" role="listitem">
-              <div class="flow-phase">Deliverables</div>
-              <div class="flow-box dark"><b>Task 7</b>Recommendations &amp; operational guidelines</div>
-            </div>
-          </div>
-          <p class="note">Highlighted tasks are what this portal demonstrates.</p>
         </div>
       </div>
 
@@ -164,35 +112,25 @@
               <a class="region" href="#veg" data-view="veg">
                 <h3>Champaign–Urbana</h3>
                 <p class="r-routes"><span class="shield i">74</span><span class="shield i">57</span><span class="shield us">45</span></p>
-                <dl><div><dt>Sites</dt><dd>192</dd></div><div><dt>County</dt><dd>Champaign</dd></div><div><dt>IDOT yards</dt><dd>543 Champaign, 544 Leverett</dd></div></dl>
+                <p class="r-meta">192 sites · IDOT yards 543 and 544</p>
               </a>
               <a class="region" href="#veg" data-view="veg">
                 <h3>Chicago area</h3>
                 <p class="r-routes"><span class="shield i">55</span><span class="shield i">57</span><span class="shield i">80</span></p>
-                <dl><div><dt>Sites</dt><dd>100</dd></div><div><dt>County</dt><dd>Cook</dd></div><div><dt>IDOT yards</dt><dd>6 in south Cook County</dd></div></dl>
+                <p class="r-meta">100 sites · 6 IDOT yards</p>
               </a>
             </div>
-            <p class="note">Road network, lanes, speed limits and traffic come from FHWA HPMS 2024; mileposts and maintenance yards from IDOT. Elsewhere in the U.S. the map shows roads only, with detail loaded from FHWA on demand.</p>
           </div>
           <div>
-            <h2 class="sec-h">Project at a glance</h2>
-            <dl class="facts one">
-              <div><dt>Program</dt><dd>Autonomous Maintenance Technologies (AMT) Phase 2 Pooled Fund, TPF-5(559)</dd></div>
-              <div><dt>Lead agency</dt><dd>Indiana DOT, with CA, CO, IL, KS, MI, MN, MO, MS, ND, PA and TX</dd></div>
-              <div><dt>Duration</dt><dd>June 2026 – May 2029 (36 months)</dd></div>
-              <div><dt>Research team</dt><dd>Department of Civil and Environmental Engineering, University of Illinois Urbana-Champaign</dd></div>
-            </dl>
+            <h2 class="sec-h">About the project</h2>
+            <p class="about-txt">Research for the AMT Phase 2 Pooled Fund, TPF-5(559), led by Indiana DOT with 11 other state DOTs. Department of Civil and Environmental Engineering, University of Illinois Urbana-Champaign, June 2026 – May 2029.</p>
+            <p class="note">Road data is real (FHWA HPMS 2024, IDOT mileposts and yards). Vegetation records are example data.</p>
+            <details class="credits-box">
+              <summary>Photo credits</summary>
+              <p class="note" style="margin-top:0">Representative photos from Wikimedia Commons, under the licenses listed. They show the vegetation type, not the specific site.</p>
+              <ul class="credits" id="credits"></ul>
+            </details>
           </div>
-        </div>
-      </div>
-
-      <div class="band tight">
-        <div class="wrap">
-          <details class="credits-box">
-            <summary>Photo credits</summary>
-            <p class="note" style="margin-top:0">Representative photos come from Wikimedia Commons under the licenses listed. They show the vegetation type, not the specific site.</p>
-            <ul class="credits" id="credits"></ul>
-          </details>
         </div>
       </div>
     </div>
@@ -485,73 +423,76 @@
   </section>
 
   <!-- ================= TEAM ================= -->
+  <!-- Photos: put a square headshot at img/team/<first-last>.jpg (e.g. img/team/run-hu.jpg); until then the initials show -->
   <section class="page" id="view-team" data-page="team" hidden>
     <div class="page-inner">
       <div class="band page-head">
         <div class="wrap">
           <p class="eyebrow">People and partners</p>
           <h1 class="page-h">Team</h1>
-          <p class="lead">University of Illinois researchers build this portal and the research behind it, with the Illinois Department of Transportation and the twelve state DOTs of the AMT Phase 2 pooled fund.</p>
-          <dl class="kpi-row">
-            <div><dt>Member state DOTs</dt><dd>12</dd></div>
-            <div><dt>Research tasks</dt><dd>7</dd></div>
-            <div><dt>Project length</dt><dd>36 <small>months</small></dd></div>
-            <div><dt>Lead agency</dt><dd>INDOT</dd></div>
-          </dl>
         </div>
       </div>
 
       <div class="band">
         <div class="wrap">
-          <h2 class="sec-h">How the partnership works</h2>
-          <div class="partners">
-            <article class="partner">
-              <span class="p-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 9.5 12 5l10 4.5-10 4.5L2 9.5Z"/><path d="M6 11.5V16c0 1.4 2.7 3 6 3s6-1.6 6-3v-4.5"/><path d="M22 9.5V15"/></svg></span>
-              <h3>Research team</h3>
-              <p class="p-org">Civil and Environmental Engineering, University of Illinois Urbana-Champaign</p>
-              <p>Runs the research: market and regulation reviews, cost–benefit analysis, field experiments, and the screening and planning tools in this portal.</p>
-              <ul class="p-tags"><li>Tasks 1–7</li><li>This portal</li></ul>
-            </article>
-            <article class="partner">
-              <span class="p-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 3 4 21M16 3l4 18"/><path d="M12 4v3m0 3.5v3m0 3.5v3"/></svg></span>
-              <h3>Illinois DOT</h3>
-              <p class="p-org">Supporting agency</p>
-              <p>A project champion and roadside maintenance specialists advise on current practice, equipment and what field crews need.</p>
-              <ul class="p-tags"><li>Project champion</li><li>Roadside maintenance</li></ul>
-            </article>
-            <article class="partner">
-              <span class="p-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20V6.5Z"/><path d="M9 4v13.5M15 6.5V20"/></svg></span>
-              <h3>AMT Phase 2 pooled fund</h3>
-              <p class="p-org">TPF-5(559), led by Indiana DOT</p>
-              <p>Twelve state DOTs fund and steer the work through steering meetings and quarterly progress reports. Results are shared with every member.</p>
-              <ul class="p-tags"><li>12 states</li><li>Steering</li></ul>
-            </article>
+          <h2 class="team-h">Faculty</h2>
+          <div class="profiles lead-row">
+            <figure class="profile">
+              <span class="headshot" data-initials="YO" aria-hidden="true"><img src="img/team/yanfeng-ouyang.jpg" alt="" loading="lazy" onerror="this.remove()"></span>
+              <figcaption><b>Yanfeng Ouyang</b><span class="role">Principal Investigator</span><small>University of Illinois Urbana-Champaign</small></figcaption>
+            </figure>
+            <figure class="profile">
+              <span class="headshot" data-initials="AT" aria-hidden="true"><img src="img/team/alireza-talebpour.jpg" alt="" loading="lazy" onerror="this.remove()"></span>
+              <figcaption><b>Alireza Talebpour</b><span class="role">Faculty</span><small>University of Illinois Urbana-Champaign</small></figcaption>
+            </figure>
+          </div>
+          <h2 class="team-h">Researchers</h2>
+          <div class="profiles grid">
+            <figure class="profile">
+              <span class="headshot" data-initials="CB" aria-hidden="true"><img src="img/team/caio-vitor-beojone.jpg" alt="" loading="lazy" onerror="this.remove()"></span>
+              <figcaption><b>Caio Vitor Beojone</b><span class="role">Postdoctoral Research Associate</span><small>University of Illinois Urbana-Champaign</small></figcaption>
+            </figure>
+            <figure class="profile">
+              <span class="headshot" data-initials="SB" aria-hidden="true"><img src="img/team/shayan-bafandkar.jpg" alt="" loading="lazy" onerror="this.remove()"></span>
+              <figcaption><b>Shayan Bafandkar</b><span class="role">Graduate Research Assistant</span><small>University of Illinois Urbana-Champaign</small></figcaption>
+            </figure>
+            <figure class="profile">
+              <span class="headshot" data-initials="IH" aria-hidden="true"><img src="img/team/ismamul-hoque.jpg" alt="" loading="lazy" onerror="this.remove()"></span>
+              <figcaption><b>Ismamul Hoque</b><span class="role">Graduate Research Assistant</span><small>University of Illinois Urbana-Champaign</small></figcaption>
+            </figure>
+            <figure class="profile">
+              <span class="headshot" data-initials="RH" aria-hidden="true"><img src="img/team/run-hu.jpg" alt="" loading="lazy" onerror="this.remove()"></span>
+              <figcaption><b>Run Hu</b><span class="role">Graduate Research Assistant</span><small>University of Illinois Urbana-Champaign</small></figcaption>
+            </figure>
+            <figure class="profile">
+              <span class="headshot" data-initials="NP" aria-hidden="true"><img src="img/team/nazmus-sakib-pallab.jpg" alt="" loading="lazy" onerror="this.remove()"></span>
+              <figcaption><b>Nazmus Sakib Pallab</b><span class="role">Graduate Research Assistant</span><small>University of Illinois Urbana-Champaign</small></figcaption>
+            </figure>
+            <figure class="profile">
+              <span class="headshot" data-initials="TR" aria-hidden="true"><img src="img/team/tina-radvand.jpg" alt="" loading="lazy" onerror="this.remove()"></span>
+              <figcaption><b>Tina Radvand</b><span class="role">Graduate Research Assistant</span><small>University of Illinois Urbana-Champaign</small></figcaption>
+            </figure>
           </div>
         </div>
       </div>
 
       <div class="band alt">
-        <div class="wrap">
-          <div class="people-head">
-            <h2 class="sec-h">People</h2>
-            <p class="note">Names from the AMT project meeting slides, August 4, 2026.</p>
+        <div class="wrap split even">
+          <div>
+            <h2 class="sec-h">Illinois Department of Transportation</h2>
+            <ul class="contacts">
+            <li><span class="avatar" aria-hidden="true">MA</span><div><b>Meiwu An</b><span>Project Champion · Traffic Operations Engineer</span></div></li>
+            <li><span class="avatar" aria-hidden="true">SH</span><div><b>Scott J. Hall</b><span>Roadside Maintenance Manager</span></div></li>
+            <li><span class="avatar" aria-hidden="true">JS</span><div><b>James Schackmann</b><span>Roadside Maintenance Resource Specialist</span></div></li>
+            </ul>
           </div>
-          <h3 class="grp-h"><i class="grp-dot uiuc" aria-hidden="true"></i>Research team · University of Illinois Urbana-Champaign</h3>
-          <div class="people">
-            <div class="person"><span class="avatar" aria-hidden="true">YO</span><div class="p-txt"><b>Yanfeng Ouyang</b><span>Principal Investigator</span><small>Civil and Environmental Engineering</small></div></div>
-            <div class="person"><span class="avatar" aria-hidden="true">CB</span><div class="p-txt"><b>Caio Vitor Beojone</b><span>Postdoctoral Research Associate</span><small>Civil and Environmental Engineering</small></div></div>
-            <div class="person"><span class="avatar" aria-hidden="true">RH</span><div class="p-txt"><b>Run Hu</b><span>Graduate Researcher</span><small>Civil and Environmental Engineering</small></div></div>
-          </div>
-          <h3 class="grp-h"><i class="grp-dot idot" aria-hidden="true"></i>Illinois Department of Transportation</h3>
-          <div class="people idot">
-            <div class="person"><span class="avatar" aria-hidden="true">MA</span><div class="p-txt"><b>Meiwu An</b><span>Project Champion · Traffic Operations Engineer</span><small>Illinois DOT</small></div></div>
-            <div class="person"><span class="avatar" aria-hidden="true">SH</span><div class="p-txt"><b>Scott J. Hall</b><span>Roadside Maintenance Manager</span><small>Illinois DOT</small></div></div>
-            <div class="person"><span class="avatar" aria-hidden="true">JS</span><div class="p-txt"><b>James Schackmann</b><span>Roadside Maintenance Resource Specialist</span><small>Illinois DOT</small></div></div>
-          </div>
-          <h3 class="grp-h"><i class="grp-dot fund" aria-hidden="true"></i>Pooled fund chairs</h3>
-          <div class="people fund">
-            <div class="person"><span class="avatar" aria-hidden="true">ML</span><div class="p-txt"><b>Michael Lane</b><span>Chair · lead agency</span><small>AMT Phase 2 pooled fund</small></div></div>
-            <div class="person"><span class="avatar" aria-hidden="true">YF</span><div class="p-txt"><b>Yiheng Feng</b><span>Chair · lead research institution</span><small>AMT Phase 2 pooled fund</small></div></div>
+          <div>
+            <h2 class="sec-h">Pooled fund chairs</h2>
+            <ul class="contacts fund">
+            <li><span class="avatar" aria-hidden="true">ML</span><div><b>Michael Lane</b><span>Chair · lead agency</span></div></li>
+            <li><span class="avatar" aria-hidden="true">YF</span><div><b>Yiheng Feng</b><span>Chair · lead research institution</span></div></li>
+            </ul>
+            <p class="note">AMT Phase 2 Pooled Fund, TPF-5(559), led by Indiana DOT with 11 other state agencies.</p>
           </div>
         </div>
       </div>

@@ -18,11 +18,13 @@
     return {
       tank: "Spray tank · " + (d.liquid || ""), battery: "Battery · " + (d.battery || ""), prop: "Propeller · " + EXTRA[id].prop.replace(" props", ""),
       motor: "Brushless motor", nozzle: id === "t40" ? "Centrifugal atomizing sprinkler" : "Spray nozzle", hoses: "Spray lines from pump to nozzles",
-      radar: "Obstacle-avoidance and altitude radar", gear: "Landing gear", arm: "Carbon-fibre arm", body: "Frame, flight controller and pump",
+      radar: "Obstacle-avoidance and altitude radar", gear: "Landing gear", arm: "Carbon-fibre arm", body: "Body shell and flight controller",
       camera: "1080p RGB camera", gimbal: "3-axis gimbal", antenna: "Radio antenna",
+      frame: "Centre frame plates", joint: "Arm folding joint", gnss: "GNSS/RTK antenna", light: "Navigation light", pump: "Spray pump",
+      flowmeter: "Flowmeter", fpv: "FPV camera", boom: "Spray boom",
     };
   };
-  const SPRAY_PARTS = ["tank", "nozzle", "hoses"];
+  const SPRAY_PARTS = ["tank", "nozzle", "hoses", "pump", "flowmeter", "boom"];
   const partOf = (name) => name.replace(/_(\d+|up|down|front|rear|left|right)$/, "");
 
   let started = false;
