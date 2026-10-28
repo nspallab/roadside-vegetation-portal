@@ -31,7 +31,7 @@
   function maybeStart() {
     if (location.hash.slice(1) !== "drones" || started || !$("v3Canvas")) return;
     started = true;
-    ["lib/three/three.min.js", "lib/three/GLTFLoader.js", "lib/three/OrbitControls.js"]
+    ["lib/three/three.min.js", "lib/three/GLTFLoader.js", "lib/three/OrbitControls.js", "lib/three/RoomEnvironment.js"]
       .reduce((p, src) => p.then(() => new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error(src)); document.head.appendChild(s); })), Promise.resolve())
       .then(init)
       .catch(() => { $("v3Load").textContent = "The 3D viewer could not load. The specification table below has the same information."; });
@@ -45,10 +45,13 @@
     const renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     renderer.outputEncoding = T.sRGBEncoding;
+    renderer.toneMapping = T.ACESFilmicToneMapping;
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
     const scene = new T.Scene();
-    scene.add(new T.HemisphereLight(0xffffff, 0x9aa3ad, 0.85));
-    const sun = new T.DirectionalLight(0xffffff, 0.9);
+    // a soft studio environment gives the metal and clear-coat parts something to reflect
+    scene.environment = new T.PMREMGenerator(renderer).fromScene(new T.RoomEnvironment(), 0.04).texture;
+    scene.add(new T.HemisphereLight(0xffffff, 0x9aa3ad, 0.35));
+    const sun = new T.DirectionalLight(0xffffff, 0.8);
     sun.position.set(3, 6, 4); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
     Object.assign(sun.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 0.5, far: 20 });
     scene.add(sun);
