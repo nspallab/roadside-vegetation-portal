@@ -411,10 +411,9 @@
     if (state.view === "plan") { el.innerHTML = Object.values(ACTION).map((a) => sw(css(a.v), a.label)).join(""); return; }
     if (by === "status") el.innerHTML = Object.values(STATUS).map((s) => sw(css(s.v), s.label)).join("");
     else if (by === "vclass") { el.innerHTML = Object.entries(VCLASS_COLORS).map(([k, c]) => sw(c, k, classKey(k))).join(""); el.classList.add("with-img"); return; }
-    else if (by === "stage") {
+    else if (by === "stage") { // colour and name only (no photos)
       const seen = new Set(D.sites.map((s) => s.stage));
-      el.innerHTML = STAGE_ORDER.filter((s) => seen.has(s)).map((s) => sw(STAGE_COLORS[STAGE_ORDER.indexOf(s)], s, stageKey(s))).join("");
-      el.classList.add("with-img"); return;
+      el.innerHTML = STAGE_ORDER.filter((s) => seen.has(s)).map((s) => sw(STAGE_COLORS[STAGE_ORDER.indexOf(s)], s)).join("");
     } else {
       $("lbTop").textContent = "0";
       $("lbBot").textContent = by === "height" ? "60+" : "60%";
