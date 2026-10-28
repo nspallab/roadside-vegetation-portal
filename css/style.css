@@ -684,13 +684,11 @@ a.feature:hover .f-go svg { transform: translateX(3px); }
   transition: border-color var(--t-fast) var(--ease), box-shadow .2s var(--ease), transform .2s var(--ease); }
 .profile:hover { border-color: #cfd6df; box-shadow: 0 12px 28px rgba(43, 63, 93, .12); transform: translateY(-3px); }
 .lead-row .profile { width: 260px; padding-top: 24px; }
-/* faculty cards link to the professor's site: the whole card is the link (stretched over it), with a visible label */
+/* faculty cards link to the professor's site: the whole card is the link (stretched over it) */
 .profile.linked { position: relative; cursor: pointer; }
 .p-hit { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
 .p-hit:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
-.p-web { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 13.5px; font-weight: 600; color: var(--navy); }
-.p-web svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.profile.linked:hover .p-web { text-decoration: underline; color: var(--orange-ink); }
+
 .headshot { position: relative; display: block; width: 116px; height: 116px; margin: 0 auto 16px; border-radius: 50%; overflow: hidden;
   background: linear-gradient(135deg, #4a6690, var(--navy)); box-shadow: 0 0 0 4px #fff, 0 0 0 6px color-mix(in srgb, var(--orange) 70%, #fff); }
 .lead-row .headshot { width: 144px; height: 144px; background: linear-gradient(135deg, #e4672a, var(--orange-ink)); box-shadow: 0 0 0 4px #fff, 0 0 0 6px var(--navy); }
