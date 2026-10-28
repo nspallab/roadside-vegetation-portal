@@ -424,3 +424,79 @@ input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-dat
 .field { min-width: 0; }
 /* extra guard for older iOS: a field never lets its control spill into the next column */
 .grid2 > .field, .grid3 > .field, .record-form .field { overflow: hidden; }
+
+/* ---------------- roadside areas, drone view, priority ---------------- */
+.gal-tabs { margin-bottom: 8px; }
+.gal-tabs span { padding: 6px 8px; font-size: 13.5px; }
+.aerial { width: 100%; height: 220px; border-radius: 6px; overflow: hidden; background: #3c4a3a; z-index: 0; }
+.ae-btn { background: #fff; border: 2px solid rgba(0,0,0,.2); border-radius: 4px; padding: 3px 8px; font: 600 12px var(--f-body); color: var(--navy); cursor: pointer; }
+.linkish { border: 0; background: none; padding: 0; color: var(--navy); text-decoration: underline; cursor: pointer; font: inherit; font-size: 12px; }
+.pri { display: inline-grid; place-items: center; min-width: 28px; height: 22px; padding: 0 5px; border-radius: 11px; flex: none;
+  font: 700 12px/1 var(--f-data); color: #fff; background: color-mix(in srgb, var(--st-control) calc(var(--p) * 1%), var(--st-monitor)); }
+.pri-parts { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 8px; align-items: center; font-size: 12px; }
+.pri-parts i { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--st-control) var(--w), #e8e9ec var(--w)); }
+.pri-parts b { font-family: var(--f-data); font-weight: 600; font-size: 11.5px; color: var(--muted); }
+.sec-title small { font-weight: 400; font-size: 12px; }
+.obs { border: 1px dashed var(--field-line); border-radius: 6px; padding: 8px 10px 10px; margin: 0; min-width: 0; }
+.obs legend { font-size: 12.5px; font-weight: 600; color: var(--navy); padding: 0 4px; }
+.obs legend small { font-weight: 400; color: var(--muted); }
+
+/* ---------------- recommendations card ---------------- */
+.stats.s4 { grid-template-columns: repeat(4, 1fr); }
+.stats.s4 .stat { padding: 7px 8px 8px; }
+.stats.s4 .stat b { font-size: 20px; }
+.stats.s4 .stat span { font-size: 11.5px; white-space: normal; }
+#recCard .site-list { max-height: none; overflow: visible; }
+#recCard { width: 380px; }
+.rec-list li { cursor: default; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 9px; align-items: center; }
+.rec-list li.empty { display: block; }
+.rec-list .act-sel { grid-column: 2 / 4; max-width: none; width: 100%; }
+.rec-list li > div { cursor: pointer; }
+.rec-list .why { white-space: normal; }
+.act-sel { min-height: 32px !important; font-size: 12.5px; padding: 2px 4px; border: 1px solid var(--field-line); border-radius: 6px; background: #fff; }
+.act-sel.changed { border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
+
+/* ---------------- plan timeline, crews on the map ---------------- */
+.gantt svg { width: 100%; height: auto; display: block; cursor: pointer; }
+.g-day { stroke: #c9ced6; stroke-dasharray: 2 2; }
+.g-lbl { font: 600 8px var(--f-body); fill: var(--muted); }
+.g-unit { font: 600 9px var(--f-body); fill: var(--ink); }
+.g-hold { opacity: .45; }
+.g-cursor { stroke: var(--orange); stroke-width: 2; }
+.tl-ctrl { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; margin-top: 8px; }
+.tl-ctrl .btn { padding: 7px 10px; white-space: nowrap; min-width: 78px; }
+.tl-ctrl select { min-height: 34px; font-size: 12.5px; border: 1px solid var(--field-line); border-radius: 6px; background: #fff; }
+.tl-ctrl input[type="range"] { width: 100%; accent-color: var(--orange); }
+.tl-clock { margin-top: 4px; font-family: var(--f-data); color: var(--navy); font-weight: 600; }
+.crew-icon { width: 30px; height: 30px; border-radius: 50%; background: var(--c); border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.45); display: grid; place-items: center; transition: transform .2s; }
+.crew-icon svg { width: 20px; height: 20px; fill: #fff; }
+.crew-icon[data-kind="idle"] { opacity: .55; transform: scale(.8); }
+.crew-icon[data-kind="work"] { box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 35%, transparent), 0 2px 6px rgba(0,0,0,.45); }
+.stop-icon { position: relative; }
+.stop-icon.done { background: #6b7280 !important; opacity: .75; color: transparent; }
+.stop-icon.done::after { content: "\2713"; position: absolute; font-size: 12px; color: #fff; }
+
+/* ---------------- 3D drone viewer (Drone Technology) ---------------- */
+.viewer3d { display: grid; grid-template-columns: 250px 1fr; gap: 18px; background: #f5f6f8; border-radius: 12px; padding: 18px; }
+.v3-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.v3-tabs { display: flex; flex-direction: column; gap: 6px; }
+.v3-tabs button { text-align: left; border: 1px solid #c9ced6; background: #fff; border-radius: 8px; padding: 9px 12px; font: 600 14px var(--f-body); color: var(--navy); cursor: pointer; }
+.v3-tabs button:hover { border-color: var(--navy); }
+.v3-tabs button[aria-selected="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }
+.v3-brand { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--orange); }
+.v3-name { margin: 2px 0 8px; font-family: var(--f-head); font-weight: 800; font-size: 20px; color: var(--navy); }
+.v3-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 10px; }
+.v3-facts div { background: #fff; border-radius: 6px; padding: 6px 8px; }
+.v3-facts dt { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.v3-facts dd { margin: 0; font-size: 13px; font-weight: 600; }
+.v3-stage { position: relative; min-height: 380px; background: radial-gradient(circle at 50% 40%, #fff 0%, #eef0f3 75%); border-radius: 10px; overflow: hidden; }
+.v3-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.v3-stage canvas:active { cursor: grabbing; }
+.v3-tip { position: absolute; z-index: 2; pointer-events: none; background: var(--navy); color: #fff; font-size: 12.5px; padding: 5px 9px; border-radius: 5px; box-shadow: var(--shadow); white-space: nowrap; }
+.v3-load { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 20px; color: var(--muted); font-size: 14px; }
+@media (max-width: 760px) {
+  .viewer3d { grid-template-columns: 1fr; padding: 12px; }
+  .v3-tabs { flex-direction: row; flex-wrap: wrap; }
+  .v3-tabs button { flex: 1; text-align: center; padding: 8px 6px; font-size: 13px; }
+  .v3-stage { min-height: 300px; order: -1; }
+}

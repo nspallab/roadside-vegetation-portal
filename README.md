@@ -28,9 +28,9 @@ The header uses a placeholder mark. To use the official University of Illinois B
 | Page | Purpose |
 |---|---|
 | **Home** | Project overview, research flow (Tasks 1–7), project facts. |
-| **Vegetation Information** | Roadside sites in both demo areas (Champaign–Urbana and Chicago), shown together. Click a site for details, photos, and its inspection and control history. You can add records, attach photos, upload GeoJSON or CSV data, export the site layer (GeoJSON/CSV), and screen the network with adjustable triggers. |
-| **Operations Planning** | Choose the sites by location (state → county → route, or all routes), by drawing an area on the map, or by picking sites. Add staging areas from the county list or place your own on the map. Other inputs: drone model, number of crews, work hours, wind and spray volume. Outputs: a recommended action for each site (drone spraying, mowing or inspection), routes on the map, schedule, duration and herbicide use. Exports schedule (CSV) and routes (GeoJSON). |
-| **Drone Technology** | Market survey table (Task 1.2) and key FAA rules. |
+| **Vegetation Information** | Roadside sites in both demo areas (Champaign–Urbana and Chicago), shown together. Zoom in to see each site's roadside vegetation area (the 30 ft right-of-way strip) and, closer still, the weed patches inside it. Click a segment or area for vegetation type, height, cover, growth stage, a priority score, a ground photo and a drone view (satellite imagery of the site with its strip and patches), and the inspection and control history. Add records (optionally with a new height, cover or stage), attach photos, upload field updates as CSV or GeoJSON (rows with a `site_id` update that site and add records; the template button gives an example), export the site layer, and screen the network with adjustable triggers. The site list ranks flagged sites by priority. |
+| **Operations Planning** | Choose the sites by location (state → county → route, or all routes), by drawing an area on the map, or by picking sites. The Recommended actions card lists each flagged site with its action (drone spot spraying, mowing or further inspection) and reason; the planner can change or drop any of them. Crews start from IDOT maintenance yards (or a place you put on the map). Other inputs: drone model, number of crews, work hours, wind and spray volume. Outputs: routes on the map, schedule, duration and herbicide use, plus a timeline (Gantt chart and Play slider) that moves each crew along its route. Zoomed in, the map shows the drone's spray passes over the weed patches and the mower's passes along the strip. Exports schedule (CSV) and routes (GeoJSON). |
+| **Drone Technology** | Interactive 3D models of the three spray drones (drag to turn, spinning rotors, spray-system highlight, part names on hover), the market survey table (Task 1.2) and key FAA rules. |
 | **Team** | Research team, IDOT contacts, pooled fund chairs. |
 
 ## Files
@@ -41,14 +41,18 @@ css/style.css       design
 js/app.js           map, screening rules, planning heuristic
 js/pages.js         loads first: switches the simple pages, builds the drone table (drone specs live here)
 js/loader.js        progress ring; loads Leaflet and the data files, then js/app.js
+js/drones3d.js      3D drone viewer; loads three.js only when the Drone Technology page opens
 data/data.js        sites (Champaign + Chicago), routing network, mileposts (generated)
 data/hpms.js        HPMS 2024 highway network layer (generated)
 data/us_interstates.js  national interstate overview + route search index (generated)
 img/vegetation/     illustrations (photos are linked from Wikimedia Commons)
 img/drones/         product images for the Drone Technology page
+img/drones/3d/      3D drone models (.glb), built by tools/gen_drones_blender.py
 lib/leaflet/        Leaflet 1.9.4 map library (local copy)
+lib/three/          three.js r147 with GLTFLoader and OrbitControls (local copy, MIT)
 tools/gen_data.py   regenerates data/data.js, data/hpms.js, data/us_interstates.js
-gis_source_data/    source GIS files (FHWA HPMS 2024, FHWA NHS 2021, IDOT mileposts) used by gen_data.py
+tools/gen_drones_blender.py  regenerates img/drones/3d/*.glb in Blender
+gis_source_data/    source GIS files (FHWA HPMS 2024, FHWA NHS 2021, IDOT mileposts, IDOT maintenance yards) used by gen_data.py
 ```
 
 ## Data
@@ -56,8 +60,11 @@ gis_source_data/    source GIS files (FHWA HPMS 2024, FHWA NHS 2021, IDOT milepo
 - **Real:**
   - Road network, lanes, speed limits and traffic (AADT): FHWA HPMS 2024, Champaign and Cook counties (`gis_source_data/Highways_HPMS_2024_Illinois`).
   - Interstate mileposts: IDOT IL Milepost layer (`gis_source_data/Mileposts_IDOT`). Sites on I-74 and I-57 are cut at real mileposts (e.g. I-74 EB, MP 181–182). US-45 has no milepost signs, so its sites use IDOT county log miles.
+  - Crew staging areas: IDOT maintenance yards from the IDOT district facilities layer (`gis_source_data/IDOT_Facilities`), e.g. 543 Champaign (201 Eisner Road) and E34 Interstate 57 (Markham).
+  - Drone view imagery: Esri World Imagery, standing in for the project's drone orthomosaics.
   - Drone specifications: the project's market survey.
 - **Example data:** vegetation, inspection and control history, and herbicide rates. Replace these when IDOT or field data arrives.
+- **Illustrative:** weed patch outlines (their total area matches each site's weed cover), drone spray swaths (a planning assumption shown in the drone table), coverage paths and the priority score weights.
 - Demo regions:
   - Champaign–Urbana: I-74 (MP 169–197), I-57 (MP 218–257), US-45 north and south. 192 sites.
   - Chicago area (Cook County): I-55 (MP 276–294), I-57 (MP 338–358), I-80 (MP 149–163). 100 sites.
@@ -66,6 +73,12 @@ gis_source_data/    source GIS files (FHWA HPMS 2024, FHWA NHS 2021, IDOT milepo
 
 ```bash
 python tools/gen_data.py gis_source_data data
+```
+
+To regenerate the 3D drone models (Blender 4.x):
+
+```bash
+blender -b --factory-startup --python tools/gen_drones_blender.py -- img/drones/3d
 ```
 
 ## Photos

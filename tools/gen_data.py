@@ -3,6 +3,7 @@
 REAL inputs (from gis_source_data/ in the repository; 08_GIS_Data in the project Box folder):
   - FHWA HPMS 2024 Illinois: Champaign County (f_system 1-4) and statewide interstates/freeways (f_system 1-2)
   - IDOT IL Milepost (2021-22 LiDAR sign inventory)
+  - IDOT district facilities: maintenance yards (team section headquarters), used as crew staging areas
   - FHWA/BTS NHS 2021 US interstates (for the national overview layer and route index)
 SYNTHETIC: vegetation, inspection and control records (example data for the prototype).
 
@@ -17,6 +18,8 @@ GIS, OUT = sys.argv[1], sys.argv[2]
 hp_champ = json.load(open(f"{GIS}/Highways_HPMS_2024_Illinois/HPMS_2024_IL_Champaign_County_FS1-4.geojson"))["features"]
 hp_state = json.load(open(f"{GIS}/Highways_HPMS_2024_Illinois/HPMS_2024_IL_Interstates_Freeways.geojson"))["features"]
 mp = json.load(open(f"{GIS}/Mileposts_IDOT/IDOT_Mileposts_Illinois.geojson"))["features"]
+# IDOT maintenance yards, by facility number (the part of Fac_Name before " - ", e.g. "543" or "E34")
+yards = {f["properties"]["Fac_Name"].split(" - ")[0].strip(): f for f in json.load(open(f"{GIS}/IDOT_Facilities/IDOT_Maintenance_Yards_Illinois.geojson"))["features"]}
 us_i = json.load(open(f"{GIS}/Highways_NHS_2021/NHS_2021_US_Interstates_simplified.geojson"))["features"]
 
 # ------------------------------------------------------------------ regions
@@ -28,16 +31,14 @@ REGIONS = [
          ("I-57", "I-57", "Interstate 57", ["010  10057 000000"], "010_10057_000000"),
          ("US-45N", "US-45", "US Route 45 north (Urbana to Rantoul)", ["010  20800 000000"], None),
          ("US-45S", "US-45", "US Route 45 south (Champaign to Tolono)", ["010  20804 000000"], None)],
-     "depots": [("CU", "Champaign staging area", [40.1395, -88.2410]),
-                ("SV", "Savoy staging area", [40.0790, -88.2975])]},
+     "depots": ["543", "544"]},
     {"id": "chicago", "code": "CHI", "name": "Chicago area (Cook County)", "county": 31, "origin": (41.70, -87.75),
      "hpms": [f for f in hp_state if f["properties"]["county_id"] == 31],
      "corridors": [
          ("I-55", "I-55", "Interstate 55 (Stevenson Expressway)", ["016  10055 000000"], "016_10055_000000"),
          ("I-57", "I-57", "Interstate 57 (south Cook County)", ["016  10057 000000"], "016_10057_000000"),
          ("I-80", "I-80", "Interstate 80 (south Cook County)", ["016  10080 000000"], "016_10080_000000")],
-     "depots": [("HG", "Hodgkins staging area, I-55", [41.7760, -87.8560]),
-                ("MK", "Markham staging area, I-57/I-80", [41.5900, -87.6950])]},
+     "depots": ["E34", "E26", "031", "032", "E33", "E25"]},
 ]
 
 class Proj:
@@ -207,12 +208,15 @@ for R in REGIONS:
     for s in sites:
         if s["region"] == R["id"] and "_mid" in s:
             s["mid_node"] = nearest(s.pop("_mid")); s.pop("_P")
-    for did, nm, ll in R["depots"]:
+    for did in R["depots"]:
+        q, (lon, lat) = yards[did]["properties"], yards[did]["geometry"]["coordinates"][:2]
+        ll = [round(lat, 5), round(lon, 5)]
+        nm = "IDOT " + q["Fac_Name"].split(" - ", 1)[-1].strip().title() + " yard (" + did + ")"
         xy = P.xy([ll[1], ll[0]]); k = nearest(xy)
         nodes.append([round(ll[0], 5), round(ll[1], 5)]); adj.append([]); n = len(nodes) - 1
         d = round(math.dist(xy, P.xy([nodes[k][1], nodes[k][0]])))
         adj[n].append([k, d]); adj[k].append([n, d])
-        depots.append({"id": did, "region": R["id"], "name": nm, "latlng": ll, "node": n})
+        depots.append({"id": did, "region": R["id"], "name": nm, "latlng": ll, "node": n, "address": (q["Address"] or "").strip().title(), "district": q["District"]})
     # mileposts for this county
     pref = "%03d_" % (10 if R["id"] == "champaign" else 16)
     seen = set()
