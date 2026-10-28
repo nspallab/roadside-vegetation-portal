@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roadside Vegetation Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="lib/leaflet/leaflet.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== Header (INTERMODAL style: navy band, logo | wordmark, orange nav) ===== -->
+<header class="site-head">
+  <div class="brandbar">
+    <a class="brand" href="#home" data-view="home">
+      <!-- Drop the official Block I file at img/logo.png to replace the placeholder mark -->
+      <img class="logo" src="img/logo.png" alt="" onerror="this.hidden=true;this.nextElementSibling.removeAttribute('hidden')">
+      <svg class="logo-fallback" hidden viewBox="0 0 56 56" aria-hidden="true">
+        <path d="M28 50 V24" stroke="var(--orange)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M28 32 C16 31 10 22 12 10 C23 12 28 20 28 32 Z" fill="var(--orange)"/>
+        <path d="M28 27 C38 26 44 19 44 8 C34 9 28 16 28 27 Z" fill="var(--orange)" opacity=".7"/>
+        <path d="M10 50 H46" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <span class="divider" aria-hidden="true"></span>
+      <span class="wordmark">ROADSIDE VEGETATION<small>Drone-Based Herbicide Spraying</small></span>
+    </a>
+  </div>
+  <nav class="navbar" aria-label="Main">
+    <a href="#home" data-view="home">Home</a>
+    <a href="#veg" data-view="veg">Vegetation Information</a>
+    <a href="#plan" data-view="plan">Operations Planning</a>
+    <a href="#drones" data-view="drones">Drone Technology</a>
+    <a href="#team" data-view="team">Team</a>
+  </nav>
+</header>
+
+<main id="main">
+
+  <!-- ================= HOME ================= -->
+  <section class="page" id="view-home" data-page="home" hidden>
+    <div class="page-inner">
+      <p class="intro"><b>Roadside Vegetation Portal</b> is a GIS-based information and operations-planning platform for <b>drone-based herbicide spraying</b> along state highways. It helps transportation agencies track roadside vegetation, find sites that need control, and plan <b>drone spraying, mowing, and inspection</b> routes that are safe, efficient and compliant.</p>
+
+      <div class="cards4">
+        <a class="card" href="#veg" data-view="veg"><h3>Vegetation Information</h3><p>Geo-coded roadside vegetation data: species, height, density, growth stage, photos, and control history.</p></a>
+        <a class="card" href="#plan" data-view="plan"><h3>Operations Planning</h3><p>Recommend mowing, drone spraying or inspection, and plan crew routes with time and herbicide estimates.</p></a>
+        <a class="card" href="#drones" data-view="drones"><h3>Drone Technology</h3><p>Market review of spraying drones, payloads and productivity, and the FAA rules that apply.</p></a>
+        <div class="card"><h3>Operational Guidelines</h3><p>Equipment, licensing and step-by-step guidance so DOTs can adopt drones in their vegetation programs.</p></div>
+      </div>
+
+      <h2 class="sec-h">Research flow</h2>
+      <div class="flow" role="list">
+        <div class="flow-col" role="listitem">
+          <div class="flow-phase">Phase 1 · 2026–27</div>
+          <div class="flow-box"><b>Task 1</b>Literature, regulation &amp; technology market survey</div>
+          <div class="flow-box"><b>Task 2</b>Cost–benefit analysis</div>
+        </div>
+        <div class="flow-arrow" aria-hidden="true"></div>
+        <div class="flow-col" role="listitem">
+          <div class="flow-phase">Phase 2 · 2027–28</div>
+          <div class="flow-box"><b>Task 5</b>Field experiments &amp; drone spray demonstrations</div>
+          <div class="flow-box"><b>Task 6</b>Operational prototype with partner DOTs</div>
+        </div>
+        <div class="flow-arrow" aria-hidden="true"></div>
+        <div class="flow-col" role="listitem">
+          <div class="flow-phase">Phase 3 · 2028–29</div>
+          <div class="flow-box hl"><b>Task 3</b>GIS-based information tool (digital twin)</div>
+          <div class="flow-box hl"><b>Task 4</b>Scheduling &amp; route planning tool</div>
+        </div>
+        <div class="flow-arrow" aria-hidden="true"></div>
+        <div class="flow-col" role="listitem">
+          <div class="flow-phase">Deliverables</div>
+          <div class="flow-box dark"><b>Task 7</b>Recommendations &amp; operational guidelines</div>
+        </div>
+      </div>
+      <p class="note">Highlighted tasks are what this portal demonstrates. Road network, lanes, speed limits and traffic volumes come from FHWA HPMS 2024 and mileposts from IDOT; vegetation records are example data in this prototype.</p>
+
+      <h2 class="sec-h">Project at a glance</h2>
+      <dl class="facts">
+        <div><dt>Program</dt><dd>Autonomous Maintenance Technologies (AMT) Phase 2 Pooled Fund, TPF-5(559)</dd></div>
+        <div><dt>Lead agency</dt><dd>Indiana DOT, with CA, CO, IL, KS, MI, MN, MO, MS, ND, PA and TX</dd></div>
+        <div><dt>Duration</dt><dd>June 2026 – May 2029 (36 months)</dd></div>
+        <div><dt>Research team</dt><dd>Department of Civil and Environmental Engineering, University of Illinois Urbana-Champaign</dd></div>
+      </dl>
+
+      <h2 class="sec-h">Demo areas</h2>
+      <p>Champaign–Urbana (I-74, I-57, US-45; 192 roadside sites) and the Chicago area in Cook County (I-55, I-57, I-80; 100 sites). Road data is real (FHWA HPMS 2024, IDOT mileposts); vegetation records are examples. The map can show any U.S. location, with road detail loaded from FHWA on demand.</p>
+
+      <h2 class="sec-h">Photo credits</h2>
+      <p class="note" style="margin-top:0">Representative photos come from Wikimedia Commons under the licenses listed. They show the vegetation type, not the specific site.</p>
+      <ul class="credits" id="credits"></ul>
+    </div>
+  </section>
+
+  <!-- ================= MAP VIEWS ================= -->
+  <section class="mapview" id="view-map" hidden>
+    <div id="map" aria-label="Map of roadside vegetation sites"></div>
+
+    <!-- vertical legend bar (numeric color modes) -->
+    <div class="legend-bar" id="legendBar" hidden>
+      <span id="lbTop">0</span><div class="lb-grad"></div><span id="lbMid">30</span><span id="lbBot">60+</span>
+    </div>
+
+    <!-- ---------- Vegetation Information panel ---------- -->
+    <aside class="float-panel" id="panel-veg" data-for="veg" aria-label="Vegetation information controls">
+      <div class="fp-top"><span>Vegetation Information</span><button class="collapse" type="button" aria-expanded="true" aria-label="Minimize panel" title="Minimize panel"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 12.5 10 7.5 15 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      <div class="fp-sec">
+        <h4>Location <i class="info" tabindex="0" role="img" aria-label="Vegetation data is available for Champaign County (Champaign–Urbana) and Cook County (Chicago area). Elsewhere the map shows roads only; road detail loads from FHWA when you zoom in." data-tip="Vegetation data is available for Champaign County (Champaign–Urbana) and Cook County (Chicago area). Elsewhere the map shows roads only; road detail loads from FHWA when you zoom in.">i</i></h4>
+        <div class="grid2">
+          <label class="field"><span>State</span><select id="locState"><option value="">Choose a state…</option></select></label>
+          <label class="field"><span>County</span><select id="locCounty" disabled><option value="">Choose a state first</option></select></label>
+        </div>
+        <label class="field"><span>Interstate</span>
+          <div class="search-row"><input type="text" id="locRoute" list="routeList" placeholder="e.g. I-80 or I-80 IL" autocomplete="off"><button class="btn btn-navy" id="locGo" type="button">Go</button></div>
+          <datalist id="routeList"></datalist></label>
+        <p class="hint" id="locNote"></p>
+      </div>
+
+      <div class="fp-sec">
+        <h4>Visualize</h4>
+        <select id="colorBy" aria-label="Color sites by">
+          <option value="status">Control status</option>
+          <option value="vclass">Vegetation class</option>
+          <option value="stage">Growth stage</option>
+          <option value="height">Height (in)</option>
+          <option value="density">Weed cover (%)</option>
+        </select>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="fp-sec">
+        <h4>Layers</h4>
+        <div class="checks">
+          <label><input type="checkbox" id="lyrSites" checked> Roadside vegetation sites</label>
+          <label><input type="checkbox" id="lyrRoads" checked> Highway network (FHWA HPMS 2024)</label>
+          <label><input type="checkbox" id="lyrMP" checked> IDOT mileposts (zoom in)</label>
+          <label><input type="checkbox" id="lyrUS" checked> U.S. Interstates (national overview)</label>
+          <label><input type="checkbox" id="lyrNHS" checked> Road detail from FHWA when zoomed in</label>
+          <label><input type="checkbox" id="lyrActivity" checked> Control activity, last 30 days</label>
+          <label><input type="checkbox" id="lyrDepots" checked> Staging areas</label>
+        </div>
+        <div class="toggle" role="radiogroup" aria-label="Basemap">
+          <label><input type="radio" name="basemap" value="streets" checked><span>Streets</span></label>
+          <label><input type="radio" name="basemap" value="satellite"><span>Satellite</span></label>
+        </div>
+      </div>
+
+      <div class="fp-sec">
+        <h4>Screen the Network</h4>
+        <div class="slider-row"><label for="thDensity">Weed cover: act at <i class="info" tabindex="0" role="img" aria-label="Share of the site covered by noxious or invasive weeds. At or above this value the site needs control; at half of it the site is watched." data-tip="Share of the site covered by noxious or invasive weeds. At or above this value the site needs control; at half of it the site is watched.">i</i></label><output id="oDensity">20%</output></div>
+        <input type="range" id="thDensity" min="0" max="80" step="5" value="20">
+        <div class="slider-row"><label for="thHeight">Height: act at <i class="info" tabindex="0" role="img" aria-label="Vegetation at or above this height needs control (mowing or spraying)." data-tip="Vegetation at or above this height needs control (mowing or spraying).">i</i></label><output id="oHeight">18 in</output></div>
+        <input type="range" id="thHeight" min="6" max="48" step="2" value="18">
+        <div class="slider-row"><label for="thAge">Inspection: watch after <i class="info" tabindex="0" role="img" aria-label="Sites not inspected for longer than this are marked Monitor." data-tip="Sites not inspected for longer than this are marked Monitor.">i</i></label><output id="oAge">45 days</output></div>
+        <input type="range" id="thAge" min="10" max="120" step="5" value="45">
+        <label class="field"><span>Route</span>
+          <select id="thRoute"><option value="all">All routes</option></select></label>
+        <div class="checks">
+          <label><input type="checkbox" id="thSight" checked> Sight-distance concerns are urgent <i class="info" tabindex="0" role="img" aria-label="On sight-line sites (curves, ramps, intersections), vegetation 12 in or taller blocks the driver’s view and needs control." data-tip="On sight-line sites (curves, ramps, intersections), vegetation 12 in or taller blocks the driver’s view and needs control.">i</i></label>
+          <label><input type="checkbox" id="thDim"> Dim sites that need no action</label>
+        </div>
+        <details class="adv" id="rulesBox">
+          <summary>How status is decided</summary>
+          <div id="statusRules" class="rules"></div>
+        </details>
+        <button class="btn btn-orange big" id="vizBtn" type="button">Visualize<small>Site list by status</small></button>
+      </div>
+
+      <div class="fp-sec">
+        <h4>Data <i class="info" tabindex="0" role="img" aria-label="Upload GeoJSON, or CSV with lat/lon columns. Download the site layer for use in ArcGIS or QGIS." data-tip="Upload GeoJSON, or CSV with lat/lon columns. Download the site layer for use in ArcGIS or QGIS.">i</i></h4>
+        <div class="tabs2" role="tablist">
+          <label class="btn btn-outline file"><input type="file" id="uploadData" accept=".geojson,.json,.csv">Upload Data</label>
+          <button class="btn btn-outline" id="downloadSitesGeo" type="button">GeoJSON</button>
+          <button class="btn btn-outline" id="downloadSites" type="button">CSV</button>
+        </div>
+        <div class="upload-note" id="uploadNote"></div>
+      </div>
+    </aside>
+
+    <!-- ---------- Operations Planning panel ---------- -->
+    <aside class="float-panel" id="panel-plan" data-for="plan" hidden aria-label="Operations planning inputs">
+      <div class="fp-top"><span>Operations Planning</span><button class="collapse" type="button" aria-expanded="true" aria-label="Minimize panel" title="Minimize panel"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 12.5 10 7.5 15 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      <div class="fp-sec">
+        <h4>1. Select Sites</h4>
+        <div class="toggle t3" role="radiogroup" aria-label="How to choose sites">
+          <label><input type="radio" name="pMode" value="loc" checked><span>Location</span></label>
+          <label><input type="radio" name="pMode" value="draw"><span>Draw area</span></label>
+          <label><input type="radio" name="pMode" value="pick"><span>Pick sites</span></label>
+        </div>
+        <div class="pm" id="pmLoc">
+          <div class="grid2">
+            <label class="field"><span>State</span><select id="psState"></select></label>
+            <label class="field"><span>County</span><select id="psCounty"></select></label>
+          </div>
+          <label class="field"><span>Route <i class="info" tabindex="0" role="img" aria-label="Plan for one interstate or U.S. route, or for all routes in the county." data-tip="Plan for one interstate or U.S. route, or for all routes in the county.">i</i></span><select id="psRoute"></select></label>
+        </div>
+        <div class="pm" id="pmDraw" hidden>
+          <div class="grid2">
+            <button class="btn btn-navy" id="drawStart" type="button">Draw on map</button>
+            <button class="btn btn-outline" id="drawClear" type="button">Clear</button>
+          </div>
+          <p class="hint" id="drawNote">Click the map to add corners. Click the first corner or double-click to finish.</p>
+        </div>
+        <div class="pm" id="pmPick" hidden>
+          <p class="hint"><b id="pickCount">0</b> sites picked. Click sites on the map to add or remove them.</p>
+        </div>
+        <div class="checks">
+          <label><input type="checkbox" id="pSpray" checked><i class="dot a-spray"></i>Drone spot spraying</label>
+          <label><input type="checkbox" id="pMow" checked><i class="dot a-mow"></i>Mowing</label>
+          <label><input type="checkbox" id="pInspect" checked><i class="dot a-inspect"></i>Further inspection (scouting)</label>
+        </div>
+      </div>
+
+      <div class="fp-sec">
+        <h4>2. Equipment &amp; Crews</h4>
+        <label class="field"><span>Spray drone model <i class="info" tabindex="0" role="img" aria-label="Tank size and rated coverage rate of this drone set the number of refills and the spraying time." data-tip="Tank size and rated coverage rate of this drone set the number of refills and the spraying time.">i</i></span><select id="pDrone"></select></label>
+        <div class="spec" id="droneSpec"></div>
+        <div class="grid3">
+          <label class="field"><span>Drones <i class="info" tabindex="0" role="img" aria-label="Drone spray crews (one drone, pilot and truck each)." data-tip="Drone spray crews (one drone, pilot and truck each).">i</i></span><input type="number" id="pDrones" min="0" max="6" value="2"></label>
+          <label class="field"><span>Mowers <i class="info" tabindex="0" role="img" aria-label="Mowing units." data-tip="Mowing units.">i</i></span><input type="number" id="pMowers" min="0" max="6" value="1"></label>
+          <label class="field"><span>Scouts <i class="info" tabindex="0" role="img" aria-label="Scouting (inspection) drone teams." data-tip="Scouting (inspection) drone teams.">i</i></span><input type="number" id="pScouts" min="0" max="4" value="1"></label>
+        </div>
+        <div class="field"><span>Staging areas <i class="info" tabindex="0" role="img" aria-label="Crews start and end each day at a staging area. Each site is served from its nearest staging area. Add the other staging areas in the county, or place your own on the map." data-tip="Crews start and end each day at a staging area. Each site is served from its nearest staging area. Add the other staging areas in the county, or place your own on the map.">i</i></span>
+          <div class="depot-rows" id="depotRows"></div>
+          <div class="grid2">
+            <button class="btn btn-outline" id="depotAdd" type="button">+ Add staging area</button>
+            <button class="btn btn-outline" id="depotPlace" type="button">Place on map</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="fp-sec">
+        <h4>3. Operating Conditions</h4>
+        <div class="grid2">
+          <label class="field"><span>Start date <i class="info" tabindex="0" role="img" aria-label="First working day of the plan." data-tip="First working day of the plan.">i</i></span><input type="date" id="pDate" value="2026-11-02"></label>
+          <label class="field"><span>Shift starts <i class="info" tabindex="0" role="img" aria-label="Time crews leave the staging area each day." data-tip="Time crews leave the staging area each day.">i</i></span><input type="time" id="pStart" value="07:30"></label>
+          <label class="field"><span>Work limit (h/day) <i class="info" tabindex="0" role="img" aria-label="Hours a crew can work per day, including driving" data-tip="Hours a crew can work per day, including driving">i</i></span><input type="number" id="pHours" min="2" max="12" step="0.5" value="8"></label>
+          <label class="field"><span>Spray volume (gal/ac) <i class="info" tabindex="0" role="img" aria-label="Gallons of mixed spray (water + herbicide) per treated acre. Sets how many tank refills are needed." data-tip="Gallons of mixed spray (water + herbicide) per treated acre. Sets how many tank refills are needed.">i</i></span><input type="number" id="pGPA" min="0.5" max="10" step="0.5" value="2"></label>
+          <label class="field"><span>Forecast wind (mph) <i class="info" tabindex="0" role="img" aria-label="Expected wind on the planned day" data-tip="Expected wind on the planned day">i</i></span><input type="number" id="pWind" min="0" max="40" value="7"></label>
+          <label class="field"><span>Wind limit (mph) <i class="info" tabindex="0" role="img" aria-label="Above this wind speed spraying stops because of drift risk; spray tasks become weather holds." data-tip="Above this wind speed spraying stops because of drift risk; spray tasks become weather holds.">i</i></span><input type="number" id="pWindMax" min="0" max="25" value="10"></label>
+        </div>
+        <div class="slider-row"><label for="pEff">Field efficiency <i class="info" tabindex="0" role="img" aria-label="Roadside strips are narrow, so drones turn often and cover ground slower than the open-field rate on the spec sheet. 40% means 70 ac/h becomes 28 ac/h." data-tip="Roadside strips are narrow, so drones turn often and cover ground slower than the open-field rate on the spec sheet. 40% means 70 ac/h becomes 28 ac/h.">i</i></label><output id="pEffOut">40%</output></div>
+        <input type="range" id="pEff" min="10" max="100" step="5" value="40">
+      </div>
+
+      <div class="fp-sec">
+        <h4>4. Run Optimization</h4>
+        <div class="toggle" role="radiogroup" aria-label="Planning priority">
+          <label><input type="radio" name="pObj" value="time" checked><span>Finish soonest</span></label>
+          <label><input type="radio" name="pObj" value="safety"><span>Sight-distance first</span></label>
+        </div>
+        <p class="hint" id="objNote"></p>
+        <button class="btn btn-orange big" id="pRun" type="button">Generate Plan<small>Illustrative heuristic</small></button>
+        <p class="hint ready" id="pReady" hidden></p>
+      </div>
+    </aside>
+
+    <!-- ---------- Plan results card (right) ---------- -->
+    <aside class="result-card" id="planOut" hidden aria-label="Plan results">
+      <div class="rc-head"><span>Recommended Plan</span><button class="x" id="planClose" type="button" aria-label="Hide plan results">×</button></div>
+      <div class="rc-body">
+        <p class="caveat">Routes come from a simple heuristic. The project's scheduling and routing model replaces it once the back end is connected.</p>
+        <div class="warn" id="planWarn" hidden></div>
+        <div class="kpis" id="kpis"></div>
+        <div class="units" id="units"></div>
+        <div class="herb" id="herbTable"></div>
+        <div class="tbl-wrap"><table class="sched" id="schedule"></table></div>
+        <div class="row-btns">
+          <button class="btn btn-navy" id="downloadPlan" type="button">Download Schedule (CSV)</button>
+          <button class="btn btn-outline" id="downloadPlanGeo" type="button">Routes (GeoJSON)</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ---------- Site detail popup card ---------- -->
+    <!-- ---------- Site list card (right): opened by Visualize; a site opens the detail card in the same place ---------- -->
+    <aside class="detail-card" id="listCard" hidden aria-label="Site list">
+      <div class="dc-head"><span id="listTitle">Roadside sites</span><button class="x" id="listClose" type="button" aria-label="Close site list">×</button></div>
+      <div class="dc-body">
+        <div class="stats" id="statusSummary" role="group" aria-label="Show sites by status"></div>
+        <ol class="site-list" id="siteList" aria-label="Sites"></ol>
+      </div>
+    </aside>
+
+    <aside class="detail-card" id="drawer" hidden aria-label="Site details">
+      <div class="dc-head">
+        <button class="back" id="dBack" type="button" aria-label="Back to site list" title="Back to site list"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="dc-title"><div class="dc-route" id="dRoute"></div><div class="dc-id" id="dId"></div></div>
+        <button class="x" id="dClose" type="button" aria-label="Close site details">×</button>
+      </div>
+      <div class="dc-body" id="dBody"></div>
+    </aside>
+  </section>
+
+  <!-- ================= DRONES ================= -->
+  <section class="page" id="view-drones" data-page="drones" hidden>
+    <div class="page-inner">
+      <h1 class="page-h">Drone Technology</h1>
+      <p class="intro left">Spraying drone platforms evaluated for roadside vegetation control. The comparison covers payload, coverage rate, power, obstacle sensing, U.S. eligibility and cost. Tank capacity and rated coverage rate from this table feed the planning tool’s estimates of refill trips and working time.</p>
+      <div class="tbl-wrap wide"><table class="market" id="marketTable"></table></div>
+      <p class="note">Specifications and list prices as published by each manufacturer; prices vary by configuration and dealer. Product images: Hylio and DJI.</p>
+
+      <h2 class="sec-h">Rules that shape operations</h2>
+      <div class="cards3">
+        <div class="card left"><h3>FAA Part 107</h3><p>Remote pilot certificate for commercial drone flights. Recurrent training every 24 months. Flights below 400 ft and within visual line of sight unless waived.</p></div>
+        <div class="card left"><h3>FAA Part 137</h3><p>Agricultural aircraft operator certificate, required to dispense herbicide from a drone. Spraying drones fly with a pilot and a visual observer, one pilot per drone.</p></div>
+        <div class="card left"><h3>Equipment eligibility</h3><p>NDAA-compliant, U.S.-available platforms are preferred. Foreign-made drones such as DJI are surveyed for comparison in case restrictions change. BVLOS rules (Part 108) are pending.</p></div>
+      </div>
+      <p class="note">Wind is a key constraint: many spraying drones operate safely only below about 6 m/s (13.5 mph), and Midwest winds often exceed that.</p>
+    </div>
+  </section>
+
+  <!-- ================= TEAM ================= -->
+  <section class="page" id="view-team" data-page="team" hidden>
+    <div class="page-inner">
+      <h1 class="page-h">Team</h1>
+      <p class="note" style="margin:0 0 8px">Names are placeholders in this preview and will be added once approved.</p>
+      <h2 class="sec-h">Research team · University of Illinois Urbana-Champaign</h2>
+      <div class="people">
+        <div class="person"><b>Researcher A</b><span>Principal Investigator, CEE</span></div>
+        <div class="person"><b>Researcher B</b><span>Postdoctoral Research Associate, CEE</span></div>
+        <div class="person"><b>Researcher C</b><span>Graduate Researcher, CEE</span></div>
+      </div>
+      <h2 class="sec-h">Illinois Department of Transportation</h2>
+      <div class="people">
+        <div class="person"><b>IDOT Contact A</b><span>Project Champion</span></div>
+        <div class="person"><b>IDOT Contact B</b><span>Roadside Maintenance</span></div>
+        <div class="person"><b>IDOT Contact C</b><span>Roadside Maintenance</span></div>
+      </div>
+      <h2 class="sec-h">AMT Phase 2 Pooled Fund</h2>
+      <div class="people">
+        <div class="person"><b>Chair A</b><span>Lead agency</span></div>
+        <div class="person"><b>Chair B</b><span>Lead research institution</span></div>
+      </div>
+      <p class="note">Member agencies: California, Colorado, Illinois, Indiana, Kansas, Michigan, Minnesota, Missouri, Mississippi, North Dakota, Pennsylvania and Texas.</p>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="js/pages.js"></script>
+<!-- loader.js shows the progress ring, loads Leaflet and data/*.js, then starts js/app.js -->
+<script src="js/loader.js"></script>
+</body>
+</html>
