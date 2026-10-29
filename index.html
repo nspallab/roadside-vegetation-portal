@@ -296,8 +296,32 @@
         <input type="range" id="pEff" min="10" max="100" step="5" value="40">
       </div>
 
+      <div class="fp-sec" data-fold="open" data-sum="cost">
+        <h4>4. Costs &amp; Budget <i class="info" tabindex="0" role="img" aria-label="The plan estimates the cost of every crew and site: crew labor, drone or mower time, herbicide and vehicle travel. Unit costs below are illustrative; replace them with your agency's rates." data-tip="The plan estimates the cost of every crew and site: crew labor, drone or mower time, herbicide and vehicle travel. Unit costs below are illustrative; replace them with your agency's rates.">i</i></h4>
+        <div class="toggle" role="radiogroup" aria-label="Budget">
+          <label><input type="radio" name="pBudgetMode" value="none" checked><span>No budget limit</span></label>
+          <label><input type="radio" name="pBudgetMode" value="max"><span>Max budget</span></label>
+        </div>
+        <label class="field" id="pBudgetRow" hidden><span>Budget ($) <i class="info" tabindex="0" role="img" aria-label="The plan takes flagged sites in priority order until the budget is used. Lower-priority sites are deferred and listed in the results." data-tip="The plan takes flagged sites in priority order until the budget is used. Lower-priority sites are deferred and listed in the results.">i</i></span><input type="number" id="pBudget" min="0" step="500" value="10000"></label>
+        <details class="adv" id="costBox">
+          <summary>Unit costs (illustrative, editable)</summary>
+          <div class="grid2">
+            <label class="field"><span>Crew labor ($/person-h)</span><input type="number" id="cLabor" min="0" step="1" value="45"></label>
+            <label class="field"><span>Vehicle ($/mile)</span><input type="number" id="cMile" min="0" step="0.05" value="0.70"></label>
+            <label class="field"><span>Spray drone ($/flight h)</span><input type="number" id="cDrone" min="0" step="1"></label>
+            <label class="field"><span>Scout drone ($/h)</span><input type="number" id="cScout" min="0" step="1" value="10"></label>
+            <label class="field"><span>Mower ($/h)</span><input type="number" id="cMower" min="0" step="1" value="65"></label>
+            <label class="field"><span>Boom truck ($/h)</span><input type="number" id="cBoom" min="0" step="1" value="55"></label>
+          </div>
+          <p class="hint" id="cDroneNote"></p>
+          <p class="hint" style="margin-top:6px"><b>Herbicide price ($/gal of product)</b></p>
+          <div class="grid2" id="herbPrices"></div>
+          <p class="hint" style="margin-top:6px">Crews: spray drone 2 people (pilot and visual observer), mower 1, scout 1. Boom truck (comparison only): 2 people, 6 ac/h, broadcast over the whole strip.</p>
+        </details>
+      </div>
+
       <div class="fp-sec" data-fold="open">
-        <h4>4. Run Optimization</h4>
+        <h4>5. Run Optimization</h4>
         <div class="toggle" role="radiogroup" aria-label="Planning priority">
           <label><input type="radio" name="pObj" value="time" checked><span>Finish soonest</span></label>
           <label><input type="radio" name="pObj" value="safety"><span>Sight-distance first</span></label>
@@ -314,6 +338,7 @@
       <div class="rc-body">
         <p class="caveat">Routes come from a simple heuristic. The project's scheduling and routing model replaces it once the back end is connected.</p>
         <div class="warn" id="planWarn" hidden></div>
+        <div class="cost" id="planCost"></div>
         <div class="kpis" id="kpis"></div>
         <div class="units" id="units"></div>
         <div class="tl" id="timeline" hidden>

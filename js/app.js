@@ -10,6 +10,7 @@
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const fmt = (n, d = 1) => Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const money = (v) => "$" + Math.round(v).toLocaleString("en-US");
   const daysSince = (iso) => Math.round((AS_OF - new Date(iso + "T12:00:00")) / 864e5);
 
   const CONTROL_TYPES = ["Mowing", "Drone spot spray", "Ground spray (boom truck)", "Brush cutting"];
@@ -444,6 +445,7 @@
         if (!s._rec || !sel.ok || s.region !== sel.region) opacity = 0.15, weight = 4;
         else if (sel.mode === "pick") opacity = state.picked.has(s.id) ? 1 : 0.35;
         else if (!sel.filter(s)) opacity = 0.25;
+        else if (state.plan && state.plan.deferredIds.has(s.id)) opacity = 0.3; // over budget
       }
       if (state.selected === s.id) weight = 10;
       if (areasShown()) weight = state.selected === s.id ? 4 : 2; // thin centre line so the strip shows
@@ -453,7 +455,7 @@
       pl.bindTooltip(() => {
         const v = visualFor(s, state.view === "plan" ? "vclass" : $("colorBy").value);
         return '<div class="tip"><img src="' + v.src + '" alt="" onerror="this.onerror=null;this.src=\'' + v.fb + '\'"><div><b>' + esc(s.route + " " + s.dir + " · " + s.label) + "</b><br>" + esc(s.species) +
-          "<br>" + esc(STATUS[s._ev.status].label) + (state.view === "plan" && s._rec ? " · " + esc(ACTION[s._rec.action].label) : "") +
+          "<br>" + esc(STATUS[s._ev.status].label) + (state.view === "plan" && s._rec ? " · " + esc(ACTION[s._rec.action].label) : "") + (state.view === "plan" && state.plan && state.plan.deferredIds.has(s.id) ? " · deferred (over budget)" : "") +
           '<br><small>' + esc(v.cap) + " · representative</small></div></div>";
       }, { sticky: true, className: "tip-wrap" });
       pl.on("click", () => onSiteClick(s));
@@ -718,7 +720,7 @@
       const mix = treated * p.gpa;
       const sorties = Math.max(1, Math.ceil(mix / p.drone.tank_gal));
       const flight = treated / (p.drone.prod_ac_hr * p.eff);
-      return { h: flight + sorties * (10 / 60) + 0.25, treated, mix, sorties, product: herb ? treated * herb.rate_gal_ac : 0, herb: s.herbicide };
+      return { h: flight + sorties * (10 / 60) + 0.25, flightH: flight, treated, mix, sorties, product: herb ? treated * herb.rate_gal_ac : 0, herb: s.herbicide };
     }
     if (action === "mow") return { h: s.length_mi * 2 / 4 + 1 / 6, laneMi: s.length_mi * 2 };
     return { h: s.length_mi / 10 + 0.25, flownMi: s.length_mi };
@@ -733,14 +735,71 @@
       date: $("pDate").value, start: $("pStart").value, hours: +$("pHours").value,
       gpa: +$("pGPA").value, wind: +$("pWind").value, windMax: +$("pWindMax").value, eff: +$("pEff").value / 100,
       obj: document.querySelector('input[name="pObj"]:checked').value,
+      cost: readCosts(),
     };
   }
 
+  /* ---- Operation costs (panel step 4). Unit costs are illustrative defaults the planner can edit. Spray drones fly with a
+     pilot and a visual observer (FAA), so a spray crew is 2 people. Work cost is charged per site; vehicle travel per crew.
+     The boom truck is a comparison only: it broadcasts over the whole strip instead of the weed patches. ---- */
+  const CREW_SIZE = { spray: 2, mow: 1, inspect: 1 };
+  const BOOM = { crew: 2, acPerH: 6 };
+  const HERB_PRICE = { aminopyralid: 400, triclopyr_24d: 70, glyphosate: 35, imazapic: 320 }; // $/gal of product, illustrative
+  function readCosts() {
+    const n = (id) => Math.max(0, +$(id).value || 0);
+    return {
+      labor: n("cLabor"), mile: n("cMile"), drone: n("cDrone"), scout: n("cScout"), mower: n("cMower"), boom: n("cBoom"),
+      herb: Object.fromEntries(Object.keys(D.herbicides).map((k) => [k, n("cHerb_" + k)])),
+      budget: document.querySelector('input[name="pBudgetMode"]:checked').value === "max" ? n("pBudget") : null,
+    };
+  }
+  function stopCost(wk, action, c) {
+    const labor = wk.h * CREW_SIZE[action] * c.labor;
+    const equip = action === "spray" ? wk.flightH * c.drone : (action === "mow" ? c.mower : c.scout) * wk.h;
+    const herb = action === "spray" && wk.herb ? wk.product * c.herb[wk.herb] : 0;
+    return { labor, equip, herb, total: labor + equip + herb };
+  }
+  const sumCost = (items) => ["labor", "equip", "herb", "travel", "total"].reduce((o, k) => ((o[k] = items.reduce((a, x) => a + (x[k] || 0), 0)), o), {});
+
+  // With a budget, keep the highest-priority flagged sites whose plan fits (binary search on how many); the rest are deferred.
   function buildPlan() {
-    const p = readPlanInputs();
+    const p = readPlanInputs(), budget = p.cost.budget;
+    let plan = planFor(p, null);
+    if (budget !== null && plan.cost.total > budget && plan.flagged.length) {
+      const ranked = plan.flagged.slice().sort((a, b) => b._pri.score - a._pri.score || a.id.localeCompare(b.id));
+      let lo = 1, hi = ranked.length - 1, best = null;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1, trial = planFor(p, new Set(ranked.slice(0, mid).map((s) => s.id)));
+        if (trial.cost.total <= budget) { best = trial; lo = mid + 1; } else hi = mid - 1;
+      }
+      plan = best || planFor(p, new Set());
+      plan.deferred = ranked.filter((s) => !plan.planned.has(s.id));
+      if (!best) plan.warn.push("The budget does not cover even the highest-priority site.");
+    }
+    plan.budget = budget;
+    plan.deferredIds = new Set(plan.deferred.map((s) => s.id));
+    plan.boom = boomComparison(plan);
+    return plan;
+  }
+  // the same spray sites done by a ground boom truck crew (broadcast over the strip), along the drone crews' routes
+  function boomComparison(plan) {
+    const c = plan.p.cost, sp = plan.units.filter((u) => u.action === "spray");
+    if (!sp.length) return null;
+    let h = 0, product = 0, herb = 0, sites = 0;
+    sp.forEach((u) => u.stops.forEach((x) => {
+      const s = x.site, rate = s.herbicide ? D.herbicides[s.herbicide].rate_gal_ac : 0;
+      h += s.area_ac / BOOM.acPerH + 0.25; product += s.area_ac * rate; herb += s.area_ac * rate * (c.herb[s.herbicide] || 0); sites++;
+    }));
+    const travel = sp.reduce((a, u) => a + u.cost.travel, 0);
+    return { sites, product, cost: h * (c.boom + BOOM.crew * c.labor) + herb + travel,
+      droneCost: sp.reduce((a, u) => a + u.cost.total, 0), droneProduct: sp.reduce((a, u) => a + u.product, 0) };
+  }
+
+  function planFor(p, only) {
     const warn = [];
-    const pool = p.sel.ok ? D.sites.filter((s) => s._rec && p.use[s._rec.action] && s.region === p.sel.region && p.sel.filter(s)) : [];
-    if (!pool.length) warn.push("No flagged sites match this area and action selection.");
+    const flagged = p.sel.ok ? D.sites.filter((s) => s._rec && p.use[s._rec.action] && s.region === p.sel.region && p.sel.filter(s)) : [];
+    const pool = only ? flagged.filter((s) => only.has(s.id)) : flagged;
+    if (!flagged.length) warn.push("No flagged sites match this area and action selection.");
     if (!p.drone.us) warn.push(p.drone.brand + " " + p.drone.model + " is not currently available in the U.S.; results are for comparison only.");
     const windHold = p.wind > p.windMax;
     if (windHold && p.use.spray) warn.push("Forecast wind " + p.wind + " mph exceeds the " + p.windMax + " mph spraying limit. Spray tasks are marked as weather holds.");
@@ -780,7 +839,8 @@
         });
       });
     });
-    return { p, units, warn };
+    const planned = new Set(units.flatMap((u) => u.stops.map((x) => x.site.id)));
+    return { p, units, warn, flagged, planned, deferred: [], cost: sumCost(units.map((u) => u.cost)) };
   }
 
   // Assign each site to its nearest depot (road distance), then share n crews among depots by workload.
@@ -843,8 +903,13 @@
     path.push(...back);
     travelM += backM;
     const sum = (f) => stops.reduce((a, x) => a + (x.wk[f] || 0), 0);
+    const c = p.cost, travelMi = travelM / M_PER_MI;
+    stops.forEach((x) => (x.cost = stopCost(x.wk, action, c)));
+    const cost = sumCost(stops.map((x) => x.cost));
+    cost.travel = travelMi * c.mile + travelMi / TRUCK_MPH * CREW_SIZE[action] * c.labor;
+    cost.total += cost.travel;
     return {
-      action, label, color, stops, path, track, depot, dayStart, days: day, travelMi: travelM / M_PER_MI,
+      action, label, color, stops, path, track, depot, dayStart, days: day, travelMi, cost,
       workH: stops.reduce((a, x) => a + x.wk.h, 0), mix: sum("mix"), product: sum("product"), sorties: sum("sorties"),
       laneMi: sum("laneMi"), flownMi: sum("flownMi"), coverMi: stops.reduce((a, x) => a + x.coverMi, 0), hold,
     };
@@ -853,7 +918,7 @@
   const clock = (h) => { const hh = Math.floor(h), mm = Math.round((h - hh) * 60); return String(hh + (mm === 60 ? 1 : 0)).padStart(2, "0") + ":" + String(mm % 60).padStart(2, "0"); };
   const dayDate = (iso, day) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + day - 1); return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); };
 
-  function renderPlan() {
+  function renderPlan(keepView) {
     const plan = (state.plan = buildPlan());
     state.focusUnit = null;
     $("planOut").hidden = false;
@@ -869,10 +934,11 @@
       [tot("sorties"), "Drone sorties"], [fmt(tot("laneMi"), 1) + " mi", "Lane-miles mowed"],
       [fmt(tot("workH") , 1) + " h", "Crew work time"], [fmt(tot("travelMi"), 0) + " mi", "Road travel"],
     ].map(([v, l]) => '<div class="kpi"><b>' + v + "</b><span>" + l + "</span></div>").join("");
+    renderCost(plan);
     $("units").innerHTML = U.map((u, i) =>
       '<button type="button" class="unit-card" data-i="' + i + '" aria-pressed="false"><i class="sw" style="background:' + u.color + '"></i><div><b>' + esc(u.label) + "</b><span>" +
       u.stops.length + " sites · " + fmt(u.travelMi, 0) + " mi travel" + (u.action === "spray" ? " · " + u.sorties + " sorties, " + fmt(u.coverMi, 1) + " mi flown" : u.action === "mow" ? " · " + fmt(u.coverMi, 1) + " mi of passes" : "") + (u.hold ? " · weather hold" : "") +
-      '</span></div><div class="t">' + u.days + "d · " + fmt(u.workH, 1) + "h</div></button>").join("");
+      '</span></div><div class="t">' + u.days + "d · " + fmt(u.workH, 1) + "h<br><b>" + money(u.cost.total) + "</b></div></button>").join("");
 
     // herbicide by product
     const byHerb = {};
@@ -885,19 +951,40 @@
     const rows = [];
     U.forEach((u) => u.stops.forEach((x, j) => rows.push({ u, x, j })));
     rows.sort((a, b) => a.x.day - b.x.day || a.x.start - b.x.start);
-    $("schedule").innerHTML = "<thead><tr><th>Day</th><th>Time</th><th>Crew</th><th>Site</th><th>Action</th><th>Est.</th></tr></thead><tbody>" +
+    $("schedule").innerHTML = "<thead><tr><th>Day</th><th>Time</th><th>Crew</th><th>Site</th><th>Action</th><th>Est.</th><th>Cost</th></tr></thead><tbody>" +
       rows.map(({ u, x, j }) => '<tr class="' + (x.hold ? "hold" : "") + '"><td>' + dayDate(plan.p.date, x.day) + '</td><td class="n">' + clock(x.start) +
         '</td><td><i class="dot" style="background:' + u.color + '"></i> ' + esc(u.label.replace(/ crew| unit| drone/g, "")) + " #" + (j + 1) +
         '</td><td class="id">' + esc(x.site.id) + "</td><td>" + esc(ACTION[u.action].label) +
         (u.action === "spray" ? "<br><small>" + fmt(x.wk.mix, 1) + " gal mix, " + x.wk.sorties + " sortie" + (x.wk.sorties > 1 ? "s" : "") + "</small>" : "") +
-        '</td><td class="n">' + fmt(x.end - x.start, 1) + " h</td></tr>").join("") + "</tbody>";
+        '</td><td class="n">' + fmt(x.end - x.start, 1) + ' h</td><td class="n">' + money(x.cost.total) + "</td></tr>").join("") + "</tbody>";
 
     $("recCard").hidden = true;
     initTimeline();
     drawPlanLayer();
     renderSites();
     drawLegend();
-    if (U.length) map.fitBounds(L.featureGroup(planLayer.getLayers()).getBounds().pad(0.05), fitPad());
+    if (U.length && !keepView) map.fitBounds(L.featureGroup(planLayer.getLayers()).getBounds().pad(0.05), fitPad());
+  }
+
+  // Cost summary at the top of the plan card
+  const COST_PARTS = [["labor", "Crew labor", "#2b3f5d"], ["equip", "Drones and mowers", "#6b86a8"], ["herb", "Herbicide", "#c84113"], ["travel", "Vehicle travel", "#a3acb9"]];
+  function renderCost(plan) {
+    const C = plan.cost, B = plan.budget, U = plan.units;
+    $("planCost").hidden = !U.length && !plan.deferred.length;
+    const pct = (v) => (C.total ? (100 * v) / C.total : 0).toFixed(1) + "%";
+    const acts = ["spray", "mow", "inspect"].map((a) => { const us = U.filter((u) => u.action === a);
+      return { a, n: us.reduce((x, u) => x + u.stops.length, 0), cost: us.reduce((x, u) => x + u.cost.total, 0), ac: us.reduce((x, u) => x + u.stops.reduce((y, s) => y + (s.wk.treated || 0), 0), 0) }; }).filter((r) => r.n);
+    const spray = acts.find((r) => r.a === "spray");
+    let html = '<div class="cost-head"><b>' + money(C.total) + "</b><span>Estimated plan cost" + (B !== null ? " · " + Math.round((100 * C.total) / Math.max(1, B)) + "% of the " + money(B) + " budget" : "") + "</span></div>" +
+      '<div class="cost-bar" role="img" aria-label="Cost breakdown: ' + COST_PARTS.map(([k, l]) => l + " " + money(C[k])).join(", ") + '">' +
+      COST_PARTS.map(([k, , col]) => '<i style="width:' + pct(C[k]) + ";background:" + col + '"></i>').join("") + "</div>" +
+      '<ul class="cost-parts">' + COST_PARTS.map(([k, l, col]) => '<li><i style="background:' + col + '"></i>' + l + "<b>" + money(C[k]) + "</b></li>").join("") + "</ul>" +
+      '<p class="cost-acts">' + acts.map((r) => esc(ACTION[r.a].label) + " " + money(r.cost) + " (" + r.n + " site" + (r.n > 1 ? "s" : "") + ")").join(" · ") +
+      (spray && spray.ac > 0 ? " · " + money(spray.cost / spray.ac) + " per acre sprayed" : "") + "</p>";
+    if (plan.boom) html += '<p class="cost-cmp">Same ' + plan.boom.sites + " spray site" + (plan.boom.sites > 1 ? "s" : "") + " by ground boom truck (broadcast over the whole strip): <b>" + money(plan.boom.cost) + "</b> and " +
+      fmt(plan.boom.product, 1) + " gal of product, against <b>" + money(plan.boom.droneCost) + "</b> and " + fmt(plan.boom.droneProduct, 1) + " gal by drone spot spraying.</p>";
+    if (plan.deferred.length) html += '<p class="cost-def">' + plan.deferred.length + " lower-priority site" + (plan.deferred.length > 1 ? "s are" : " is") + " deferred to stay within the budget (faded on the map).</p>";
+    $("planCost").innerHTML = html;
   }
 
   function drawPlanLayer() {
@@ -1036,9 +1123,9 @@
   });
   $("downloadPlan").addEventListener("click", () => {
     const P = state.plan; if (!P) return;
-    const rows = [["day", "date", "start", "end", "crew", "stop", "site_id", "action", "spray_mix_gal", "herbicide", "product_gal", "sorties", "weather_hold"]];
+    const rows = [["day", "date", "start", "end", "crew", "stop", "site_id", "action", "spray_mix_gal", "herbicide", "product_gal", "sorties", "weather_hold", "work_cost_usd"]];
     P.units.forEach((u) => u.stops.forEach((x, j) => rows.push([x.day, dayDate(P.p.date, x.day), clock(x.start), clock(x.end), u.label, j + 1, x.site.id, ACTION[u.action].label,
-      x.wk.mix ? x.wk.mix.toFixed(2) : "", x.wk.herb ? D.herbicides[x.wk.herb].name : "", x.wk.product ? x.wk.product.toFixed(3) : "", x.wk.sorties || "", x.hold ? "yes" : ""])));
+      x.wk.mix ? x.wk.mix.toFixed(2) : "", x.wk.herb ? D.herbicides[x.wk.herb].name : "", x.wk.product ? x.wk.product.toFixed(3) : "", x.wk.sorties || "", x.hold ? "yes" : "", x.cost.total.toFixed(2)])));
     downloadCSV("vegetation_control_plan.csv", rows);
   });
 
@@ -1137,7 +1224,22 @@
     $("droneSpec").innerHTML = '<dl class="attrs"><dt>Tank</dt><dd><span class="num">' + d.tank_gal + "</span> gal</dd><dt>Rated output</dt><dd><span class=\"num\">" + d.prod_ac_hr +
       "</span> ac/h " + esc(d.rate_note) + "</dd><dt>Battery</dt><dd>" + esc(d.battery) + "</dd><dt>Price</dt><dd>" + esc(d.price) + "</dd></dl>";
   }
-  $("pDrone").addEventListener("change", droneSpec); droneSpec();
+  $("pDrone").addEventListener("change", () => { droneSpec(); syncDroneRate(); costChanged(); }); droneSpec();
+  function syncDroneRate() {
+    const d = D.drones.find((x) => x.id === $("pDrone").value);
+    $("cDrone").value = d.cost_hr;
+    $("cDroneNote").textContent = "Spray drone rate for the " + d.brand + " " + d.model + ": " + d.cost_note + ".";
+  }
+  $("herbPrices").innerHTML = Object.entries(D.herbicides).map(([k, h]) => '<label class="field"><span>' + esc(h.name) + '</span><input type="number" id="cHerb_' + k +
+    '" min="0" step="1" value="' + (HERB_PRICE[k] ?? 0) + '"></label>').join("");
+  syncDroneRate();
+  // a cost or budget change re-plans in place (the map view stays where it is)
+  function costChanged() { syncFoldSums(); if (state.plan && state.view === "plan") renderPlan(true); }
+  document.querySelectorAll('input[name="pBudgetMode"]').forEach((r) => r.addEventListener("change", () => {
+    $("pBudgetRow").hidden = r.value !== "max" || !r.checked; costChanged();
+  }));
+  ["pBudget", "cLabor", "cMile", "cDrone", "cScout", "cMower", "cBoom"].concat(Object.keys(D.herbicides).map((k) => "cHerb_" + k))
+    .forEach((id) => $(id).addEventListener("change", costChanged));
   $("pEff").addEventListener("input", () => ($("pEffOut").textContent = $("pEff").value + "%"));
   // "Finding routes…" progress card, like INTERMODAL's route search
   $("pRun").addEventListener("click", () => {
@@ -1185,11 +1287,11 @@
     const P = state.plan; if (!P) return;
     const feats = [];
     P.units.forEach((u) => {
-      feats.push({ type: "Feature", geometry: lineGeom(u.path.map((k) => G.nodes[k])), properties: { crew: u.label, action: ACTION[u.action].label, days: u.days, travel_mi: +u.travelMi.toFixed(1), work_h: +u.workH.toFixed(2) } });
+      feats.push({ type: "Feature", geometry: lineGeom(u.path.map((k) => G.nodes[k])), properties: { crew: u.label, action: ACTION[u.action].label, cost_usd: +u.cost.total.toFixed(2), travel_cost_usd: +u.cost.travel.toFixed(2), days: u.days, travel_mi: +u.travelMi.toFixed(1), work_h: +u.workH.toFixed(2) } });
       u.stops.forEach((x, j) => {
         const m = x.site.coords[Math.floor(x.site.coords.length / 2)];
         feats.push({ type: "Feature", geometry: { type: "Point", coordinates: [m[1], m[0]] },
-          properties: { crew: u.label, stop: j + 1, site_id: x.site.id, day: x.day, start: clock(x.start), end: clock(x.end), spray_mix_gal: x.wk.mix ? +x.wk.mix.toFixed(2) : null } });
+          properties: { crew: u.label, stop: j + 1, site_id: x.site.id, work_cost_usd: +x.cost.total.toFixed(2), day: x.day, start: clock(x.start), end: clock(x.end), spray_mix_gal: x.wk.mix ? +x.wk.mix.toFixed(2) : null } });
       });
     });
     downloadJSON("vegetation_control_plan.geojson", { type: "FeatureCollection", features: feats });
@@ -1600,6 +1702,7 @@
   const FOLD_SUM = {
     loc: () => ($("locState").value ? $("locState").selectedOptions[0].textContent + ($("locCounty").value ? ", " + $("locCounty").selectedOptions[0].textContent : "") : "Demo areas"),
     layers: () => { const c = [...$("panel-veg").querySelectorAll('[data-sum="layers"] input[type="checkbox"]')]; return c.filter((x) => x.checked).length + " of " + c.length + " on"; },
+    cost: () => (document.querySelector('input[name="pBudgetMode"]:checked').value === "max" ? "Budget " + money(+$("pBudget").value || 0) : "No budget limit") + " · $" + $("cLabor").value + "/h labor",
     ops: () => dayDate($("pDate").value, 1) + " · " + $("pStart").value + " · " + $("pHours").value + " h · wind " + $("pWind").value + " mph",
   };
   const FOLD_SVG = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
