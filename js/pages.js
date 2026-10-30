@@ -2,7 +2,7 @@
    before Leaflet and the ~1 MB map data arrive:
    - switches Home / Drone Technology / Team until app.js takes over (window.Pages.ready = true)
    - builds the Drone Technology table. window.DRONES is also used by app.js for planning
-     (it overrides the copy in data/data.js). swath_m is a planning assumption for drawing spray passes, not a spec-sheet value. */
+     (it overrides the copy in data/data.js). swath_m (spray passes) and cost_hr (ownership cost per flight hour) are planning assumptions, not spec-sheet values. */
 (function () {
   "use strict";
   const VIEWS = ["home", "veg", "plan", "drones", "team"];
@@ -32,6 +32,8 @@
       "brand": "Hylio",
       "tank_gal": 13.0,
       "swath_m": 7.6,
+      "cost_hr": 46,
+      "cost_note": "configured price ÷ 1,000 flight hours",
       "prod_ac_hr": 70,
       "rate_note": "@ 2 GPA",
       "battery": "18S 30Ah LiPo, 14 kg",
@@ -50,6 +52,8 @@
       "brand": "DJI",
       "tank_gal": 10.6,
       "swath_m": 11,
+      "cost_hr": 46,
+      "cost_note": "no U.S. price; ARES rate used",
       "prod_ac_hr": 52.6,
       "rate_note": "21.3 ha/h @ 15 L/ha",
       "battery": "30 Ah, 52.22 V, ~12 kg",
@@ -68,6 +72,8 @@
       "brand": "Hylio",
       "tank_gal": 2.5,
       "swath_m": 4.6,
+      "cost_hr": 27,
+      "cost_note": "configured price ÷ 1,000 flight hours",
       "prod_ac_hr": 13,
       "rate_note": "@ 2 gal/ac",
       "battery": "12S 16Ah LiPo, 4.5 kg",
@@ -94,7 +100,8 @@
     ["Obstacle avoidance", (d) => esc(d.avoidance)],
     ["Regulatory status", (d) => '<span class="badge ' + (d.us ? "ok" : "no") + '">' + (d.us ? "U.S. eligible" : "Not available in U.S.") + "</span><br>" + esc(d.compliance)],
     ["Price", (d) => esc(d.price)],
-    ["Spray swath <small>(planning assumption)</small>", (d) => esc(d.swath_m + " m (" + Math.round(d.swath_m / 0.3048) + " ft)")]];
+    ["Spray swath <small>(planning assumption)</small>", (d) => esc(d.swath_m + " m (" + Math.round(d.swath_m / 0.3048) + " ft)")],
+    ["Ownership cost <small>(planning assumption)</small>", (d) => esc("$" + d.cost_hr + " per flight hour (" + d.cost_note + ")")]];
   const photoCell = (d) => {
     const ph = PHOTO[d.id];
     if (!ph) return "<td></td>";
