@@ -14,6 +14,13 @@
     document.querySelectorAll("[data-page]").forEach((p) => (p.hidden = p.dataset.page !== v));
   }
   window.addEventListener("hashchange", show);
+  // Home "Demo areas" cards: open the vegetation map with that county chosen (applied by app.js, now or once it loads)
+  document.addEventListener("click", (e) => {
+    const card = e.target.closest(".region[data-county]");
+    if (!card) return;
+    window.PENDING_COUNTY = card.dataset.county;
+    if (window.applyPendingCounty) setTimeout(window.applyPendingCounty, 60);
+  });
   show();
   // shared footer on each reading page
   const foot = document.getElementById("footTpl");

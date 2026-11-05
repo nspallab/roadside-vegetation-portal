@@ -24,7 +24,7 @@ us_i = json.load(open(f"{GIS}/Highways_NHS_2021/NHS_2021_US_Interstates_simplifi
 
 # ------------------------------------------------------------------ regions
 REGIONS = [
-    {"id": "champaign", "code": "CU", "name": "Champaign–Urbana (Champaign County)", "county": 19, "origin": (40.13, -88.25),
+    {"id": "champaign", "code": "CU", "name": "Champaign (Champaign County)", "county": 19, "origin": (40.13, -88.25),
      "hpms": hp_champ,
      "corridors": [
          ("I-74", "I-74", "Interstate 74", ["010  10074 000000"], "010_10074_000000"),

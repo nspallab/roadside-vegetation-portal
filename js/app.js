@@ -1446,6 +1446,12 @@
     $("locNote").textContent = "";
   });
   $("locGo").addEventListener("click", goRoute);
+  // County chosen from a Home "Demo areas" card (js/pages.js sets PENDING_COUNTY)
+  window.applyPendingCounty = () => {
+    const c = window.PENDING_COUNTY; if (!c || !COUNTY_GEOID[c]) return;
+    window.PENDING_COUNTY = null;
+    $("locCounty").value = c; $("locCounty").dispatchEvent(new Event("change"));
+  };
   $("locRoute").addEventListener("keydown", (e) => { if (e.key === "Enter") goRoute(); });
 
   // ---- drawn polygon
@@ -1846,5 +1852,6 @@
   renderPatches();
   setView((location.hash || "#home").slice(1));
   onPlanAreaChange();
+  setTimeout(window.applyPendingCounty, 80); // a Demo areas card clicked while the map was still loading
   if (window.LoadKit) { LoadKit.Big.hide(); loadNational(); }
 })();

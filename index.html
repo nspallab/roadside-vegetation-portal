@@ -110,12 +110,12 @@
           <div>
             <h2 class="sec-h">Demo areas</h2>
             <div class="regions">
-              <a class="region" href="#veg" data-view="veg">
-                <h3>Champaign–Urbana</h3>
+              <a class="region" href="#veg" data-view="veg" data-county="Champaign" title="Show Champaign County on the vegetation map">
+                <h3>Champaign</h3>
                 <p class="r-routes"><span class="shield i">74</span><span class="shield i">57</span><span class="shield us">45</span></p>
                 <p class="r-meta">192 sites · IDOT yards 543 and 544</p>
               </a>
-              <a class="region" href="#veg" data-view="veg">
+              <a class="region" href="#veg" data-view="veg" data-county="Cook" title="Show Cook County (Chicago) on the vegetation map">
                 <h3>Chicago</h3>
                 <p class="r-routes"><span class="shield i">55</span><span class="shield i">57</span><span class="shield i">80</span></p>
                 <p class="r-meta">100 sites · 6 IDOT yards</p>
@@ -151,7 +151,7 @@
     <aside class="float-panel" id="panel-veg" data-for="veg" aria-label="Vegetation information controls">
       <div class="fp-top"><h2 class="fp-title">Vegetation Information</h2><button class="collapse" type="button" aria-expanded="true" aria-label="Minimize panel" title="Minimize panel"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 12.5 10 7.5 15 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
       <div class="fp-sec" data-fold="closed" data-sum="loc">
-        <h4>Location <i class="info" tabindex="0" role="img" aria-label="Vegetation data is available only for Champaign County (Champaign–Urbana) and Cook County (Chicago), so other states and counties cannot be chosen yet. Searching a route zooms to it and filters the site list." data-tip="Vegetation data is available only for Champaign County (Champaign–Urbana) and Cook County (Chicago), so other states and counties cannot be chosen yet. Searching a route zooms to it and filters the site list.">i</i></h4>
+        <h4>Location <i class="info" tabindex="0" role="img" aria-label="Vegetation data is available only for Champaign County and Cook County (Chicago), so other states and counties cannot be chosen yet. Searching a route zooms to it and filters the site list." data-tip="Vegetation data is available only for Champaign County and Cook County (Chicago), so other states and counties cannot be chosen yet. Searching a route zooms to it and filters the site list.">i</i></h4>
         <div class="grid2">
           <label class="field"><span>State</span><select id="locState"></select></label>
           <label class="field"><span>County</span><select id="locCounty"></select></label>
