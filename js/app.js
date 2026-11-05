@@ -362,34 +362,44 @@
   const linked = (r, inner) => r.page ? '<a href="' + r.page + '" target="_blank" rel="noopener" title="' + esc(r.title + " — " + r.credit + " (open source page)") + '">' + inner + "</a>" : inner;
   const DRIVER_EYE_IN = 42; // AASHTO driver eye height 3.5 ft, used as a visual reference only
   // Height schematic: ruler 0–60 in, plant drawn to h, limit θh and driver-eye reference lines.
+  // Height schematic: vegetation drawn to scale (0–60 in) against the height limit and a driver's eye height.
+  // Sized so the labels stay readable at card width (about 180 px) and when enlarged.
+  const HALO = ' paint-order="stroke" stroke="#f5f8f3" stroke-width="3" stroke-linejoin="round"';
   function heightSVG(h, th) {
-    const y0 = 82, k = 72 / 60, y = (v) => (y0 - Math.min(v, 64) * k).toFixed(1);
+    const y0 = 104, k = 88 / 60, y = (v) => (y0 - Math.min(v, 64) * k).toFixed(1);
     let blades = "";
-    for (let i = 0; i < 18; i++) {
-      const x = 46 + i * 3.2, hh = Math.min(h, 64) * (0.78 + 0.22 * Math.sin(i * 1.7) ** 2), lean = (i % 3 - 1) * 4;
-      blades += '<path d="M' + x + " " + y0 + " Q" + (x + lean * 0.3) + " " + (y0 - hh * k * 0.6).toFixed(1) + " " + (x + lean) + " " + (y0 - hh * k).toFixed(1) + '" stroke="' + (i % 2 ? "#4f8a3a" : "#6aa84f") + '" stroke-width="1.6" fill="none"/>';
+    for (let i = 0; i < 22; i++) {
+      const x = 62 + i * 3.8, hh = Math.min(h, 64) * (0.78 + 0.22 * Math.sin(i * 1.7) ** 2), lean = (i % 3 - 1) * 5;
+      blades += '<path d="M' + x + " " + y0 + " Q" + (x + lean * 0.3) + " " + (y0 - hh * k * 0.6).toFixed(1) + " " + (x + lean) + " " + (y0 - hh * k).toFixed(1) + '" stroke="' + (i % 2 ? "#4f8a3a" : "#6aa84f") + '" stroke-width="2" fill="none"/>';
     }
     let ticks = "";
-    for (let v = 0; v <= 60; v += 12) ticks += '<line x1="14" x2="20" y1="' + y(v) + '" y2="' + y(v) + '" stroke="#555"/><text x="22" y="' + (+y(v) + 3) + '" font-size="7" fill="#555">' + v + "</text>";
-    return '<svg viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg"><rect width="120" height="90" fill="#f5f8f3"/>' +
-      '<line x1="14" x2="14" y1="' + y(60) + '" y2="' + y0 + '" stroke="#555"/>' + ticks + blades +
-      '<rect y="' + y0 + '" width="120" height="8" fill="#b9a27a"/>' +
-      '<line x1="34" x2="118" y1="' + y(th.height) + '" y2="' + y(th.height) + '" stroke="#d1432b" stroke-dasharray="4 2"/><text x="118" y="' + (+y(th.height) - 2) + '" font-size="6.5" text-anchor="end" fill="#d1432b">limit ' + th.height + " in</text>" +
-      '<line x1="34" x2="118" y1="' + y(DRIVER_EYE_IN) + '" y2="' + y(DRIVER_EYE_IN) + '" stroke="#2a6fdb" stroke-dasharray="2 2"/><text x="118" y="' + (+y(DRIVER_EYE_IN) - 2) + '" font-size="6.5" text-anchor="end" fill="#2a6fdb">driver eye 42 in</text>' +
-      '<text x="72" y="' + (+y(h) - 3) + '" font-size="8" font-weight="700" text-anchor="middle" fill="#2b3f5d">' + h + " in</text></svg>";
+    for (let v = 0; v <= 60; v += 12) ticks += '<line x1="24" x2="30" y1="' + y(v) + '" y2="' + y(v) + '" stroke="#555"/><text x="21" y="' + (+y(v) + 3.5) + '" font-size="10" text-anchor="end" fill="#444">' + v + "</text>";
+    const line = (v, color, dash, label, above) => '<line x1="30" x2="158" y1="' + y(v) + '" y2="' + y(v) + '" stroke="' + color + '" stroke-width="1.4" stroke-dasharray="' + dash + '"/>' +
+      '<text x="157" y="' + (+y(v) + (above ? -4 : 12)) + '" font-size="10" font-weight="700" text-anchor="end" fill="' + color + '"' + HALO + ">" + label + "</text>";
+    const close = Math.abs(th.height - DRIVER_EYE_IN) < 9;
+    return '<svg viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif"><rect width="160" height="120" fill="#f5f8f3"/>' +
+      '<text x="4" y="8" font-size="8" fill="#666">in</text>' +
+      '<line x1="30" x2="30" y1="' + y(60) + '" y2="' + y0 + '" stroke="#555"/>' + ticks + blades +
+      '<rect y="' + y0 + '" width="160" height="16" fill="#b9a27a"/>' +
+      line(DRIVER_EYE_IN, "#2a6fdb", "3 2", "driver eye " + DRIVER_EYE_IN + " in", true) +
+      line(th.height, "#d1432b", "5 3", "limit " + th.height + " in", !close || th.height > DRIVER_EYE_IN) +
+      // this site's height: a navy marker on the scale and the value in the top-left corner (never collides with the line labels)
+      '<path d="M30 ' + y(h) + ' l8 -4.5 v9 z" fill="#2b3f5d"/>' +
+      '<text x="40" y="16" font-size="13" font-weight="800" fill="#2b3f5d"' + HALO + ">" + h + " in</text></svg>";
   }
-  // Cover schematic: 10x10 quadrat, c cells filled with the target species (deterministic layout per site).
+  // Cover schematic: 10x10 quadrat, c cells filled with weeds (deterministic layout per site).
   function coverSVG(s, th) {
     const c = s.herbicide ? s.density_pct : 0, n = Math.round(c);
     let seed = [...s.id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
     const order = [...Array(100).keys()].sort(() => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296) - 0.5);
     const on = new Set(order.slice(0, n));
     let cells = "";
-    for (let i = 0; i < 100; i++) cells += '<rect x="' + (8 + (i % 10) * 7.4) + '" y="' + (6 + Math.floor(i / 10) * 7.4) + '" width="6.8" height="6.8" rx="1" fill="' + (on.has(i) ? VCLASS_COLORS[s.vclass] : "#cfe3bf") + '"/>';
-    return '<svg viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg"><rect width="120" height="90" fill="#f5f8f3"/>' + cells +
-      '<text x="88" y="30" font-size="13" font-weight="800" fill="#2b3f5d">' + (s.herbicide ? c + "%" : "—") + "</text>" +
-      '<text x="88" y="42" font-size="6.5" fill="#555">' + (s.herbicide ? "target cover" : "turf only") + "</text>" +
-      '<text x="88" y="58" font-size="6.5" fill="#d1432b">act at ' + th.density + "%</text></svg>";
+    for (let i = 0; i < 100; i++) cells += '<rect x="' + (7 + (i % 10) * 9.6) + '" y="' + (12 + Math.floor(i / 10) * 9.6) + '" width="8.6" height="8.6" rx="1.5" fill="' + (on.has(i) ? VCLASS_COLORS[s.vclass] : "#cfe3bf") + '"/>';
+    return '<svg viewBox="0 0 176 120" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif"><rect width="176" height="120" fill="#f5f8f3"/>' + cells +
+      '<text x="109" y="46" font-size="24" font-weight="800" fill="#2b3f5d">' + (s.herbicide ? c + "%" : "—") + "</text>" +
+      '<text x="109" y="62" font-size="11" fill="#444">' + (s.herbicide ? "weed cover" : "turf only") + "</text>" +
+      '<text x="109" y="84" font-size="11" font-weight="700" fill="#d1432b">act at ' + th.density + "%</text>" +
+      '<text x="109" y="98" font-size="10.5" fill="#8a5a00">watch at ' + Math.round(th.monFrac * th.density) + "%</text></svg>";
   }
   const svgURI = (svg) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   // Which visual goes with the current "Color by" mode (A5)
@@ -575,10 +585,14 @@
     const pri = s._pri, priBlock = pri.score ? '<div><h3 class="sec-title">Priority ' + priBadge(pri.score) + '<small class="muted">of 100</small></h3><div class="pri-parts">' +
       Object.entries(PRI_PARTS).map(([k, [lbl, max]]) => '<span>' + lbl + '</span><i style="--w:' + (100 * (pri.parts[k] || 0) / max) + '%"></i><b>' + (pri.parts[k] || 0) + "/" + max + "</b>").join("") + "</div></div>" : "";
     const th = thresholds();
+    // growth-stage photo full width; height and cover side by side; click any of them to enlarge
+    const zoomFig = (src, cap, alt, fb, zcap) => '<figure><button type="button" class="zoomable" data-src="' + esc(src) + '" data-cap="' + esc(zcap || cap) + '" aria-label="Enlarge: ' + esc(cap) + '">' +
+      '<img src="' + esc(src) + '" alt="' + esc(alt) + '"' + (fb ? ' onerror="this.onerror=null;this.src=\'' + esc(fb) + '\';this.parentNode.dataset.src=this.src"' : "") + "></button><figcaption>" + esc(cap) + "</figcaption></figure>";
     const strip = '<div class="rep-strip">' +
-      '<figure>' + linked(rs, imgTag(rs, "", s.stage)) + "<figcaption>" + esc(s.stage) + (rs.photo ? " · photo" : "") + "</figcaption></figure>" +
-      '<figure><img src="' + svgURI(heightSVG(s.height_in, th)) + '" alt=""><figcaption>Height</figcaption></figure>' +
-      '<figure><img src="' + svgURI(coverSVG(s, th)) + '" alt=""><figcaption>Cover</figcaption></figure></div>';
+      zoomFig(rs.src, "Growth stage: " + s.stage + (rs.photo ? " · representative photo" : ""), s.stage, rs.fb,
+        "Growth stage: " + s.stage + (rs.photo ? " · representative photo, not of this site · " + rs.credit : "")) +
+      zoomFig(svgURI(heightSVG(s.height_in, th)), "Height: " + s.height_in + " in", "Height schematic") +
+      zoomFig(svgURI(coverSVG(s, th)), "Cover: " + (s.herbicide ? s.density_pct + "% weeds" : "turf only"), "Cover schematic") + "</div>";
     // Screening card: one row per check, one result each; the most serious result sets the status
     const RES = { act: "Act", watch: "Watch", ok: "OK", na: "—" };
     const coverBar = (k) => {
@@ -1381,6 +1395,20 @@
     const g = $("locCounty").value;
     if (g) showBoundary(1, "GEOID='" + g + "'", "County boundary"); else if ($("locState").value) showBoundary(0, "STATE='" + $("locState").value + "'", "State boundary");
   });
+
+  /* ----------------------------------------------------- image zoom (site card pictures) */
+  const zoomBox = document.createElement("div");
+  zoomBox.className = "zoom-box"; zoomBox.hidden = true; zoomBox.setAttribute("role", "dialog"); zoomBox.setAttribute("aria-modal", "true");
+  zoomBox.innerHTML = '<figure><img alt=""><figcaption></figcaption></figure><button type="button" class="zoom-x" aria-label="Close">×</button>';
+  document.body.appendChild(zoomBox);
+  let zoomFrom = null;
+  function closeZoom() { zoomBox.hidden = true; if (zoomFrom) zoomFrom.focus(); zoomFrom = null; }
+  document.addEventListener("click", (e) => {
+    const z = e.target.closest(".zoomable");
+    if (z) { zoomFrom = z; zoomBox.querySelector("img").src = z.dataset.src; zoomBox.querySelector("figcaption").textContent = z.dataset.cap; zoomBox.hidden = false; zoomBox.querySelector(".zoom-x").focus(); return; }
+    if (!zoomBox.hidden && (e.target === zoomBox || e.target.closest(".zoom-x"))) closeZoom();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !zoomBox.hidden) closeZoom(); });
 
   /* ----------------------------------------------------- 9a. minimize the left panels to one row */
   document.querySelectorAll(".float-panel .collapse").forEach((b) => b.addEventListener("click", () => {

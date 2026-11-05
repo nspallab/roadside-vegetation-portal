@@ -283,10 +283,22 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
 .photo { position: relative; }
 .photo img { background: #f5f8f3; }
 .rep-tag { position: absolute; left: 6px; bottom: 6px; background: rgba(43,63,93,.85); color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 3px; }
-.rep-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
-.rep-strip figure { margin: 0; }
-.rep-strip img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border: 1px solid var(--line); border-radius: 4px; background: #f5f8f3; display: block; }
-.rep-strip figcaption { font-size: 10.5px; color: var(--muted); text-align: center; margin-top: 2px; }
+/* growth-stage photo across the top, height and cover side by side below; each can be enlarged */
+.rep-strip { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 6px; }
+.rep-strip figure { margin: 0; min-width: 0; }
+.rep-strip figure:first-child { grid-column: 1 / -1; }
+.rep-strip .zoomable { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; position: relative; }
+.rep-strip .zoomable::after { content: "⤢"; position: absolute; right: 6px; top: 6px; width: 22px; height: 22px; display: grid; place-items: center;
+  border-radius: 50%; background: rgba(43, 63, 93, .75); color: #fff; font-size: 13px; opacity: .85; }
+.rep-strip img { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; border: 1px solid var(--line); border-radius: 6px; background: #f5f8f3; display: block; }
+.rep-strip figure:first-child img { aspect-ratio: 16 / 9; object-fit: cover; }
+.rep-strip figcaption { font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 4px; }
+.zoom-box { position: fixed; inset: 0; z-index: 5000; background: rgba(15, 23, 36, .82); display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
+.zoom-box[hidden] { display: none; }
+.zoom-box figure { margin: 0; width: min(720px, 92vw); cursor: default; }
+.zoom-box img { display: block; width: 100%; height: auto; max-height: 78vh; object-fit: contain; background: #f5f8f3; border-radius: 10px; }
+.zoom-box figcaption { color: #fff; text-align: center; margin-top: 10px; font-size: 15px; }
+.zoom-x { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fff; color: var(--navy); font-size: 24px; line-height: 1; cursor: pointer; }
 .scr { display: flex; flex-direction: column; font-size: 12.5px; }
 .scr-note { margin: 0 0 6px; font-size: 12px; color: var(--muted); }
 .scr-note.on { color: var(--ink); font-weight: 600; }
