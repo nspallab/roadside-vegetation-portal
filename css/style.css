@@ -753,3 +753,14 @@ a.feature:hover .f-go svg { transform: translateX(3px); }
 .cost-cmp { margin: 0; padding: 8px 10px; border-radius: 8px; background: #f5f7fa; font-size: 12.5px; color: #374151; }
 .cost-def { margin: 0; padding: 7px 10px; border-radius: 8px; background: var(--warn-bg); color: var(--warn-ink); font-size: 12.5px; }
 .unit-card .t b { font-family: var(--f-data); color: var(--navy); }
+
+/* route suggestions under the search boxes */
+.search-row { position: relative; }
+.suggest { position: absolute; z-index: 60; top: calc(100% + 4px); left: 0; right: 0; margin: 0; padding: 4px; list-style: none; background: #fff;
+  border: 1px solid var(--field-line); border-radius: 8px; box-shadow: 0 6px 18px rgba(0, 0, 0, .14); max-height: 240px; overflow-y: auto; }
+.suggest li { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.suggest li b { color: var(--navy); }
+.suggest li span { color: var(--muted); font-size: 12.5px; }
+.suggest li:hover, .suggest li.on { background: #fff1e6; }
+.suggest li.none { cursor: default; color: var(--muted); font-size: 13px; display: block; }
+.suggest li.none:hover { background: none; }

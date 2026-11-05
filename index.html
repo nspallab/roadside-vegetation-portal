@@ -157,8 +157,7 @@
           <label class="field"><span>County</span><select id="locCounty"></select></label>
         </div>
         <label class="field"><span>Interstate</span>
-          <div class="search-row"><input type="text" id="locRoute" list="routeList" placeholder="e.g. I-57 or I-57 Cook" autocomplete="off"><button class="btn btn-navy" id="locGo" type="button">Go</button></div>
-          <datalist id="routeList"></datalist></label>
+          <div class="search-row"><input type="text" id="locRoute" placeholder="e.g. I-57 or I-57 Cook" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off"><button class="btn btn-navy" id="locGo" type="button">Go</button></div></label>
         <p class="hint" id="locNote"></p>
       </div>
 
@@ -244,7 +243,10 @@
             <label class="field"><span>State</span><select id="psState"></select></label>
             <label class="field"><span>County</span><select id="psCounty"></select></label>
           </div>
-          <label class="field"><span>Route <i class="info" tabindex="0" role="img" aria-label="Plan for one interstate or U.S. route, or for all routes in the county." data-tip="Plan for one interstate or U.S. route, or for all routes in the county.">i</i></span><select id="psRoute"></select></label>
+          <label class="field"><span>Route <i class="info" tabindex="0" role="img" aria-label="Type an interstate or U.S. route (for example I-57) and press Go to plan for that route only. Leave it empty for all routes in the county." data-tip="Type an interstate or U.S. route (for example I-57) and press Go to plan for that route only. Leave it empty for all routes in the county.">i</i></span>
+            <div class="search-row"><input type="text" id="psRouteQ" placeholder="All routes · or type I-57" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off"><button class="btn btn-navy" id="psRouteGo" type="button">Go</button></div>
+            <select id="psRoute" hidden></select></label>
+          <p class="hint" id="psRouteNote"></p>
         </div>
         <div class="pm" id="pmDraw" hidden>
           <div class="grid2">
