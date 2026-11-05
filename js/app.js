@@ -1397,30 +1397,54 @@
   const planMode = () => document.querySelector('input[name="pMode"]:checked').value;
 
   // ---- Vegetation Information > Location: same rule as planning. Only Illinois and the two counties with
-  //      vegetation data can be chosen; the rest are listed but disabled. Route also sets the screening route filter.
+  //      vegetation data can be chosen; the rest are listed but disabled. The interstate search finds routes
+  //      with vegetation data (in the chosen county, if one is chosen), zooms to them and sets the route filter.
   const COUNTY_GEOID = { Champaign: "17019", Cook: "17031" };
   $("locState").innerHTML = STATES.map((x) => '<option value="' + x[0] + '"' + (x[0] === "17" ? " selected" : " disabled") + ">" + x[1] + (x[0] === "17" ? "" : NA) + "</option>").join("");
-  $("locCounty").innerHTML = '<option value="">Both demo counties</option>' +
+  $("locCounty").innerHTML = '<option value="" disabled selected hidden>Choose a county…</option>' +
     IL_COUNTIES.map((c) => '<option value="' + c + '"' + (DATA_COUNTIES[c] ? "" : " disabled") + ">" + c + (DATA_COUNTIES[c] ? "" : NA) + "</option>").join("");
   const locSites = () => { const r = DATA_COUNTIES[$("locCounty").value]; return D.sites.filter((x) => !r || x.region === r); };
-  function fillLocRoutes() {
-    const keep = $("locRoute").value;
-    const routes = [...new Set(locSites().map((x) => x.route))].sort();
-    $("locRoute").innerHTML = '<option value="all">All routes</option>' + routes.map((x) => '<option value="' + x + '">' + x + "</option>").join("");
-    $("locRoute").value = routes.includes(keep) ? keep : "all";
+  function fillRouteList() {
+    const c = $("locCounty").value, routes = [...new Set(locSites().map((x) => x.route))].sort();
+    $("routeList").innerHTML = routes.map((r) => '<option value="' + r + '">').join("") +
+      (c ? "" : Object.keys(DATA_COUNTIES).flatMap((cn) => [...new Set(D.sites.filter((x) => x.region === DATA_COUNTIES[cn]).map((x) => x.route))].sort().map((r) => '<option value="' + r + " " + cn + '">')).join(""));
   }
-  function goLocation() {
-    const route = $("locRoute").value, c = $("locCounty").value;
-    if ($("thRoute").value !== route) { $("thRoute").value = route; $("thRoute").dispatchEvent(new Event("input")); }
-    const pts = locSites().filter((x) => route === "all" || x.route === route).flatMap((x) => [x.coords[0], x.coords[x.coords.length - 1]]);
+  function fitSites(list) {
+    const pts = list.flatMap((x) => [x.coords[0], x.coords[x.coords.length - 1]]);
     if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.08), fitPad());
-    if (c) showBoundary(1, "GEOID='" + COUNTY_GEOID[c] + "'", "County boundary"); else outlineLayer.clearLayers();
-    $("locNote").textContent = (c ? c + " County" : "Champaign and Cook counties") + (route === "all" ? "" : " · " + route) + ".";
   }
-  fillLocRoutes();
-  $("locCounty").addEventListener("change", () => { fillLocRoutes(); goLocation(); });
-  $("locRoute").addEventListener("change", goLocation);
-  $("thRoute").addEventListener("change", () => { if ([...$("locRoute").options].some((o) => o.value === $("thRoute").value)) $("locRoute").value = $("thRoute").value; });
+  function goRoute() {
+    const raw = $("locRoute").value.trim(), note = $("locNote");
+    if (!raw) { note.textContent = "Type a route, for example I-57."; return; }
+    // "I57", "i-57", "57", "US 45", "I-57 Cook" all work
+    const m = raw.toUpperCase().match(/^(?:(US|I)\s*-?\s*)?(\d+)\s*(CHAMPAIGN|COOK)?(?:\s*COUNTY)?$/);
+    const all = [...new Set(D.sites.map((x) => x.route))].sort();
+    const route = m && all.find((r) => r === (m[1] === "US" ? "US-" : m[1] === "I" ? "I-" : r.startsWith("US-") ? "US-" : "I-") + m[2]) || (m && all.find((r) => r.endsWith("-" + m[2])));
+    if (!route) { note.textContent = "No vegetation data for " + raw + ". Routes with data: " + all.join(", ") + "."; return; }
+    let county = m[3] ? m[3][0] + m[3].slice(1).toLowerCase() : $("locCounty").value;
+    let list = D.sites.filter((x) => x.route === route && (!county || x.region === DATA_COUNTIES[county]));
+    if (!list.length) {
+      const asked = county;
+      list = D.sites.filter((x) => x.route === route);
+      const regs = [...new Set(list.map((x) => x.region))];
+      county = regs.length === 1 ? Object.keys(DATA_COUNTIES).find((k) => DATA_COUNTIES[k] === regs[0]) : "";
+      note.textContent = route + " has no vegetation data in " + asked + " County. Showing it in " + (county ? county + " County" : "both counties") + ".";
+    }
+    else note.textContent = "Showing " + route + (county ? " in " + county + " County" : "") + ".";
+    if (!county && $("locCounty").value) { $("locCounty").selectedIndex = 0; fillRouteList(); }
+    if (county && $("locCounty").value !== county) { $("locCounty").value = county; fillRouteList(); }
+    $("thRoute").value = route; $("thRoute").dispatchEvent(new Event("input"));
+    fitSites(list);
+  }
+  fillRouteList();
+  $("locCounty").addEventListener("change", () => {
+    const c = $("locCounty").value;
+    fillRouteList(); fitSites(locSites());
+    showBoundary(1, "GEOID='" + COUNTY_GEOID[c] + "'", "County boundary");
+    $("locNote").textContent = "";
+  });
+  $("locGo").addEventListener("click", goRoute);
+  $("locRoute").addEventListener("keydown", (e) => { if (e.key === "Enter") goRoute(); });
 
   // ---- drawn polygon
   let drawing = false, drawPts = [], drawPoly = null, placingDepot = false;
@@ -1728,7 +1752,7 @@
 
   /* ---- Collapsible panel sections (data-fold="open|closed"); a folded section shows a one-line summary ---- */
   const FOLD_SUM = {
-    loc: () => "Illinois · " + ($("locCounty").value ? $("locCounty").value + " County" : "both counties") + ($("locRoute").value !== "all" ? " · " + $("locRoute").value : ""),
+    loc: () => "Illinois" + ($("locCounty").value ? " · " + $("locCounty").value + " County" : ""),
     layers: () => { const c = [...$("panel-veg").querySelectorAll('[data-sum="layers"] input[type="checkbox"]')]; return c.filter((x) => x.checked).length + " of " + c.length + " on"; },
     cost: () => (document.querySelector('input[name="pBudgetMode"]:checked').value === "max" ? "Budget " + money(+$("pBudget").value || 0) : "No budget limit") + " · $" + $("cLabor").value + "/h labor",
     ops: () => dayDate($("pDate").value, 1) + " · " + $("pStart").value + " · " + $("pHours").value + " h · wind " + $("pWind").value + " mph",
@@ -1749,7 +1773,7 @@
     h.appendChild(b);
     set(sec.dataset.fold !== "closed");
   });
-  ["locState", "locCounty", "locRoute", "pDate", "pStart", "pHours", "pWind"].forEach((id) => $(id).addEventListener("change", syncFoldSums));
+  ["locState", "locCounty", "pDate", "pStart", "pHours", "pWind"].forEach((id) => $(id).addEventListener("change", syncFoldSums));
   $("panel-veg").querySelectorAll('[data-sum="layers"] input').forEach((c) => c.addEventListener("change", syncFoldSums));
 
   syncOutputs();
