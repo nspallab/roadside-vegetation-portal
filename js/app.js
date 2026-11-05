@@ -1470,7 +1470,8 @@
     const flagged = sel.ok ? D.sites.filter((s) => s._rec && s.region === sel.region && sel.filter(s)).length : 0;
     $("pRun").disabled = !sel.ok || !flagged;
     $("pReady").hidden = sel.ok && flagged > 0;
-    $("pReady").textContent = !sel.ok ? sel.msg : flagged ? "" : "No flagged sites in this selection.";
+    const unticked = sel.ok && !flagged && D.sites.some((x) => x._auto && x.region === sel.region && sel.filter(x));
+    $("pReady").textContent = !sel.ok ? sel.msg : flagged ? "" : unticked ? "All sites are unticked. Tick at least one site in Recommended actions." : "No flagged sites in this selection.";
     return { sel, flagged };
   }
   function onPlanAreaChange(fit) {
@@ -1486,38 +1487,56 @@
       if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.08), fitPad());
     }
   }
-  // ---- Recommendations card: every flagged site in the selection with its recommended action; the planner can change it
+  // ---- Recommendations card: every flagged site in the selection with its recommended action.
+  //      All sites start ticked; untick a site to leave it out of the plan (overrides[id] = "skip").
   const REC_TILES = { spray: ["Drone spray", "--a-spray"], mow: ["Mow", "--a-mow"], inspect: ["Inspect", "--a-inspect"], skip: ["Left out", "--muted"] };
   state.recFilter = null;
+  let recShown = []; // ids of the rows currently listed (after the tile filter)
   function renderRecs() {
     const sel = planSel();
     const pool = sel.ok ? D.sites.filter((s) => s._auto && s.region === sel.region && sel.filter(s)) : [];
     const key = (s) => (s._rec ? s._rec.action : "skip"), n = { spray: 0, mow: 0, inspect: 0, skip: 0 };
     pool.forEach((s) => n[key(s)]++);
+    const picked = pool.length - n.skip;
     $("recTitle").textContent = "Recommended actions · " + pool.length + " site" + (pool.length === 1 ? "" : "s");
     $("recSummary").innerHTML = Object.entries(REC_TILES).map(([k, [lbl, v]]) =>
       '<button type="button" class="stat" data-a="' + k + '" aria-pressed="' + (state.recFilter === k) + '" style="--c:var(' + v + ')"><b>' + n[k] + "</b><span>" + lbl + "</span></button>").join("");
     const list = pool.filter((s) => !state.recFilter || key(s) === state.recFilter).sort((a, b) => b._pri.score - a._pri.score || a.id.localeCompare(b.id));
-    $("recList").innerHTML = list.map((s) =>
-      '<li data-id="' + s.id + '">' + shield(s.route) + '<div tabindex="0"><div class="sid">' + esc(s.route + " " + s.dir + " · " + s.label) + '</div><div class="why">' +
-      esc(s._rec ? s._rec.why : "Left out of the plan by the planner") + "</div></div>" + priBadge(s._pri.score) +
-      '<select data-id="' + s.id + '" aria-label="Action for ' + esc(s.id) + '" class="act-sel' + (overrides[s.id] ? " changed" : "") + '">' +
-      ["spray", "mow", "inspect", "skip"].map((a) => '<option value="' + a + '"' + (key(s) === a ? " selected" : "") + ">" + (a === "skip" ? "Leave out" : ACTION[a].label) + (a === s._auto.action ? " (recommended)" : "") + "</option>").join("") +
-      "</select></li>").join("") || '<li class="empty">' + (sel.ok ? "No flagged sites in this group." : esc(sel.msg)) + "</li>";
+    recShown = list.map((s) => s.id);
+    const on = list.filter((s) => overrides[s.id] !== "skip").length;
+    const all = $("recAll");
+    all.checked = list.length > 0 && on === list.length; all.indeterminate = on > 0 && on < list.length; all.disabled = !list.length;
+    $("recAllLbl").textContent = state.recFilter ? "Select all shown" : "Select all";
+    $("recCount").textContent = picked + " of " + pool.length + " selected";
+    $("recList").innerHTML = list.map((s) => {
+      const inPlan = overrides[s.id] !== "skip", a = s._auto.action;
+      return '<li data-id="' + s.id + '" class="' + (inPlan ? "" : "off") + '">' +
+        '<input type="checkbox" class="rec-tick" data-id="' + s.id + '"' + (inPlan ? " checked" : "") + ' aria-label="Include ' + esc(s.route + " " + s.dir + " " + s.label) + ' in the plan">' +
+        shield(s.route) + '<div tabindex="0"><div class="sid">' + esc(s.route + " " + s.dir + " · " + s.label) + '</div><div class="why">' +
+        esc(inPlan ? s._auto.why : "Left out of the plan") + "</div></div>" + priBadge(s._pri.score) +
+        '<span class="act-tag" style="--c:var(' + ACTION[a].v + ')">' + ACTION[a].label + "</span></li>";
+    }).join("") || '<li class="empty">' + (sel.ok ? "No flagged sites in this group." : esc(sel.msg)) + "</li>";
   }
   function showRecs() { $("drawer").hidden = true; state.selected = null; $("planOut").hidden = true; $("recCard").hidden = false; renderSites(); }
+  function recChanged() {
+    if (state.plan) { state.plan = null; state.tl = null; planLayer.clearLayers(); coverLayer.clearLayers(); toast("Selection changed: generate the plan again."); }
+    renderSites();
+  }
   $("recOpen").addEventListener("click", showRecs);
   $("recClose").addEventListener("click", () => { $("recCard").hidden = true; if (state.plan) $("planOut").hidden = false; });
   $("recSummary").addEventListener("click", (e) => { const t = e.target.closest(".stat"); if (!t) return; state.recFilter = state.recFilter === t.dataset.a ? null : t.dataset.a; renderRecs(); });
-  $("recList").addEventListener("change", (e) => {
-    const sel = e.target.closest("select[data-id]"); if (!sel) return;
-    const s = byId[sel.dataset.id];
-    if (sel.value === s._auto.action) delete overrides[s.id]; else overrides[s.id] = sel.value;
-    if (state.plan) { state.plan = null; state.tl = null; planLayer.clearLayers(); coverLayer.clearLayers(); toast("Actions changed: generate the plan again."); }
-    renderSites();
+  $("recAll").addEventListener("change", () => {
+    const on = $("recAll").checked;
+    recShown.forEach((id) => { if (on) delete overrides[id]; else overrides[id] = "skip"; });
+    recChanged();
   });
-  $("recList").addEventListener("click", (e) => { if (e.target.closest("select")) return; const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); });
-  $("recList").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.target.closest("select")) { const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); } });
+  $("recList").addEventListener("change", (e) => {
+    const t = e.target.closest(".rec-tick"); if (!t) return;
+    if (t.checked) delete overrides[t.dataset.id]; else overrides[t.dataset.id] = "skip";
+    recChanged();
+  });
+  $("recList").addEventListener("click", (e) => { if (e.target.closest("input")) return; const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); });
+  $("recList").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.target.closest("input")) { const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); } });
 
   document.querySelectorAll('input[name="pMode"]').forEach((r) => r.addEventListener("change", () => {
     const m = planMode();
