@@ -283,15 +283,13 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
 .photo { position: relative; }
 .photo img { background: #f5f8f3; }
 .rep-tag { position: absolute; left: 6px; bottom: 6px; background: rgba(43,63,93,.85); color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 3px; }
-/* growth-stage photo across the top, height and cover side by side below; each can be enlarged */
+/* height and cover schematics side by side; each can be enlarged */
 .rep-strip { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 6px; }
 .rep-strip figure { margin: 0; min-width: 0; }
-.rep-strip figure:first-child { grid-column: 1 / -1; }
 .rep-strip .zoomable { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; position: relative; }
 .rep-strip .zoomable::after { content: "⤢"; position: absolute; right: 6px; top: 6px; width: 22px; height: 22px; display: grid; place-items: center;
   border-radius: 50%; background: rgba(43, 63, 93, .75); color: #fff; font-size: 13px; opacity: .85; }
 .rep-strip img { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; border: 1px solid var(--line); border-radius: 6px; background: #f5f8f3; display: block; }
-.rep-strip figure:first-child img { aspect-ratio: 16 / 9; object-fit: cover; }
 .rep-strip figcaption { font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 4px; }
 .zoom-box { position: fixed; inset: 0; z-index: 5000; background: rgba(15, 23, 36, .82); display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
 .zoom-box[hidden] { display: none; }

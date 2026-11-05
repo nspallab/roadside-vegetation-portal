@@ -23,7 +23,7 @@ python -m http.server 8000
 
 Then open http://localhost:8000 in a browser.
 
-You need an internet connection for the map background (Esri tiles, no API key), web fonts, the growth-stage photos (Wikimedia Commons), and on-demand road detail (FHWA) and county lookups (Census TIGERweb). Everything else works offline.
+You need an internet connection for the map background (Esri tiles, no API key), web fonts, and on-demand road detail (FHWA) and county lookups (Census TIGERweb). Everything else works offline.
 
 A circular progress ring shows loading progress at startup and for background jobs.
 
@@ -101,7 +101,7 @@ The navy header band and orange navigation bar use the University of Illinois co
 
 ## Photos
 
-Vegetation class photos are project photos in `img/vegetation/photos/class/`. Growth-stage photos come from Wikimedia Commons (CC BY, CC BY-SA, CC0 or public domain) and are linked from `js/app.js`. Credits are listed on the Home page and in each site card. The illustrations are only a fallback if a photo cannot load. See `img/vegetation/README.md` for how to change an image.
+Vegetation class photos are project photos in `img/vegetation/photos/class/`; credits are listed on the Home page and in each site card. Growth stages are shown as text and map colours, without photos. The illustrations are only a fallback if a photo cannot load. See `img/vegetation/README.md` for how to change an image.
 
 ## Next steps (back end)
 

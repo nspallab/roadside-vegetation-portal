@@ -317,10 +317,10 @@
     "Noxious broadleaf": "noxious-broadleaf", "Invasive broadleaf": "invasive-broadleaf", "Noxious grass": "noxious-grass",
     "Invasive grass": "invasive-grass", "Woody brush": "woody-brush", "Turf grass (desirable)": "turf",
   };
-  /* ---- Representative photos. Vegetation classes: project photos in img/vegetation/photos/class/<class>.jpg.
-     Growth stages: Wikimedia Commons, open licenses (hotlinked; attribution shown on Home page and in the site card).
-     Each entry: [image URL or path, title, credit, licence, source page or null].
-     Every class and stage has a photo; the illustration is only a fallback if a photo cannot load. ---- */
+  /* ---- Representative photos, one per vegetation class: project photos in img/vegetation/photos/class/<class>.jpg
+     (credits shown on the Home page and in the site card). Growth stages have no photos.
+     Each entry: [image path or URL, title, credit, licence, source page or null].
+     The illustration is only a fallback if a photo cannot load. ---- */
   const LIC_URL = {
     "CC BY 2.0": "https://creativecommons.org/licenses/by/2.0/", "CC BY 2.5": "https://creativecommons.org/licenses/by/2.5/",
     "CC BY 3.0 us": "https://creativecommons.org/licenses/by/3.0/us/", "CC BY 4.0": "https://creativecommons.org/licenses/by/4.0/",
@@ -334,18 +334,6 @@
     "class/invasive-grass": ["img/vegetation/photos/class/invasive-grass.jpg", "Reed canary grass, ribbon grass form (Phalaris arundinacea)", "Project team", "Project photo", null],
     "class/woody-brush": ["img/vegetation/photos/class/woody-brush.jpg", "Woody groundcover with vine seedlings", "Project team", "Project photo", null],
     "class/turf": ["img/vegetation/photos/class/turf.jpg", "Roadside turf strip with scattered weeds", "Project team", "Project photo", null],
-    "stage/rosette": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/Cirsium_vulgare_%28Speerdistel%29_-_Noordwijk%2C_South_Holland%2C_NL.jpg/960px-Cirsium_vulgare_%28Speerdistel%29_-_Noordwijk%2C_South_Holland%2C_NL.jpg", "Thistle rosette (Cirsium vulgare)", "Rudolphous", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File:Cirsium_vulgare_(Speerdistel)_-_Noordwijk,_South_Holland,_NL.jpg"],
-    "stage/fall-regrowth": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Cirsium_vulgare_at_Jalovec_in_%C4%8C%C3%ADchov%2C_T%C5%99eb%C3%AD%C4%8D_District.jpg/960px-Cirsium_vulgare_at_Jalovec_in_%C4%8C%C3%ADchov%2C_T%C5%99eb%C3%AD%C4%8D_District.jpg", "Thistle regrowth rosette (Cirsium vulgare)", "Jiří Sedláček", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File:Cirsium_vulgare_at_Jalovec_in_%C4%8C%C3%ADchov,_T%C5%99eb%C3%AD%C4%8D_District.jpg"],
-    "stage/vegetative": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ee/Phalaris_arundinacea_HojasyTallo_2010-8-29_SierraMadrona.jpg/960px-Phalaris_arundinacea_HojasyTallo_2010-8-29_SierraMadrona.jpg", "Leafy grass stems before heading (Phalaris arundinacea)", "Javier Martín", "Public domain", "https://commons.wikimedia.org/wiki/File:Phalaris_arundinacea_HojasyTallo_2010-8-29_SierraMadrona.jpg"],
-    "stage/boot": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7d/Eremopyrum_triticeum_%283735544536%29.jpg/960px-Eremopyrum_triticeum_%283735544536%29.jpg", "Grass head swelling in the leaf sheath (boot stage, Eremopyrum triticeum)", "Matt Lavin", "CC BY-SA 2.0", "https://commons.wikimedia.org/wiki/File:Eremopyrum_triticeum_(3735544536).jpg"],
-    "stage/leaf-out": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/20150423Euonymus_alatus4.jpg/960px-20150423Euonymus_alatus4.jpg", "Spring leaf-out of an invasive shrub (Euonymus alatus)", "AnRo0002", "CC0", "https://commons.wikimedia.org/wiki/File:20150423Euonymus_alatus4.jpg"],
-    "stage/bolting": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/3/36/Starr-040723-0074-Verbascum_thapsus-bolting-Puu_Mali-Hawaii_%2824419153180%29.jpg/960px-Starr-040723-0074-Verbascum_thapsus-bolting-Puu_Mali-Hawaii_%2824419153180%29.jpg", "Bolting common mullein (Verbascum thapsus)", "Forest and Kim Starr", "CC BY 3.0 us", "https://commons.wikimedia.org/wiki/File:Starr-040723-0074-Verbascum_thapsus-bolting-Puu_Mali-Hawaii_(24419153180).jpg"],
-    "stage/heading": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4d/Phalaris_arundinacea_%283883207046%29.jpg/960px-Phalaris_arundinacea_%283883207046%29.jpg", "Grass heads emerging (Phalaris arundinacea)", "Matt Lavin", "CC BY-SA 2.0", "https://commons.wikimedia.org/wiki/File:Phalaris_arundinacea_(3883207046).jpg"],
-    "stage/full-leaf": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6c/Lonicera_maackii_640437962.jpg/960px-Lonicera_maackii_640437962.jpg", "Amur honeysuckle in full leaf", "Alex Abair", "CC BY 4.0", "https://commons.wikimedia.org/wiki/File:Lonicera_maackii_640437962.jpg"],
-    "stage/flowering": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/1/10/Cirsium_arvense_-_p%C3%B5ldohakas.jpg/960px-Cirsium_arvense_-_p%C3%B5ldohakas.jpg", "Flowering Canada thistle", "Ivar Leidus", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File:Cirsium_arvense_-_p%C3%B5ldohakas.jpg"],
-    "stage/fruiting": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/6/69/Lonicera_maackii_in_Schenley_Park%2C_Pittsburgh_%2815473295805%29.jpg/960px-Lonicera_maackii_in_Schenley_Park%2C_Pittsburgh_%2815473295805%29.jpg", "Amur honeysuckle fruit", "Britt Reints", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File:Lonicera_maackii_in_Schenley_Park,_Pittsburgh_(15473295805).jpg"],
-    "stage/seed-set": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c7/20050716-004-thistle.jpg/960px-20050716-004-thistle.jpg", "Thistle going to seed", "Gary Houston", "CC0", "https://commons.wikimedia.org/wiki/File:20050716-004-thistle.jpg"],
-    "stage/dormant": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b3/Thistle_at_winter_in_Gyurmi.jpg/960px-Thistle_at_winter_in_Gyurmi.jpg", "Dormant thistle in winter", "Maximden", "CC0", "https://commons.wikimedia.org/wiki/File:Thistle_at_winter_in_Gyurmi.jpg"],
   };
 
   const illusSrc = (key) => "img/vegetation/" + key + ".svg";
@@ -356,9 +344,7 @@
     return { src: illusSrc(key), fb: illusSrc(key), title: ph ? ph[1] : "Illustration", credit: null, page: null, photo: false };
   }
   const classKey = (vclass) => "class/" + CLASS_IMG[vclass];
-  const stageKey = (stage) => "stage/" + slug(stage);
   const classImg = (vclass) => repImage(classKey(vclass)).src;
-  const stageImg = (stage) => repImage(stageKey(stage)).src;
   // <img> that falls back to the illustration if a photo cannot load; wrapped in a link to the source page for photos
   const imgTag = (r, cls, alt) => '<img class="' + (cls || "") + '" src="' + r.src + '" alt="' + esc(alt || r.title) + '" loading="lazy" onerror="this.onerror=null;this.src=\'' + r.fb + '\'">';
   const linked = (r, inner) => r.page ? '<a href="' + r.page + '" target="_blank" rel="noopener" title="' + esc(r.title + " — " + r.credit + " (open source page)") + '">' + inner + "</a>" : inner;
@@ -408,7 +394,7 @@
   function visualFor(s, mode) {
     const th = thresholds();
     const fromRep = (r, cap) => ({ src: r.src, fb: r.fb, cap: cap + (r.photo ? " · photo: " + r.credit : " · illustration") });
-    if (mode === "stage") return fromRep(repImage(stageKey(s.stage)), "Growth stage: " + s.stage);
+    if (mode === "stage") return fromRep(repImage(classKey(s.vclass)), s.vclass + " · growth stage: " + s.stage);
     if (mode === "height") { const u = svgURI(heightSVG(s.height_in, th)); return { src: u, fb: u, cap: "Height schematic" }; }
     if (mode === "density") { const u = svgURI(coverSVG(s, th)); return { src: u, fb: u, cap: "Cover schematic (10×10 quadrat)" }; }
     return fromRep(repImage(classKey(s.vclass)), s.vclass);
@@ -568,7 +554,7 @@
     const age = daysSince(s.last_inspected);
     // A6: an uploaded site photo wins; otherwise show the class illustration, labelled as representative
     // A6: an uploaded site photo wins; otherwise the representative photo/illustration for the class (linked to its source)
-    const rc = repImage(classKey(s.vclass)), rs = repImage(stageKey(s.stage));
+    const rc = repImage(classKey(s.vclass));
     const photo = s._photo
       ? '<img src="' + s._photo + '" alt="Uploaded photo of site ' + esc(s.id) + '">'
       : linked(rc, imgTag(rc, "", "Representative " + (rc.photo ? "photo" : "illustration") + " of " + s.vclass)) +
@@ -587,12 +573,10 @@
     const pri = s._pri, priBlock = pri.score ? '<div><h3 class="sec-title">Priority ' + priBadge(pri.score) + '<small class="muted">of 100</small></h3><div class="pri-parts">' +
       Object.entries(PRI_PARTS).map(([k, [lbl, max]]) => '<span>' + lbl + '</span><i style="--w:' + (100 * (pri.parts[k] || 0) / max) + '%"></i><b>' + (pri.parts[k] || 0) + "/" + max + "</b>").join("") + "</div></div>" : "";
     const th = thresholds();
-    // growth-stage photo full width; height and cover side by side; click any of them to enlarge
+    // height and cover schematics side by side (the growth stage is listed under Vegetation); click either to enlarge
     const zoomFig = (src, cap, alt, fb, zcap) => '<figure><button type="button" class="zoomable" data-src="' + esc(src) + '" data-cap="' + esc(zcap || cap) + '" aria-label="Enlarge: ' + esc(cap) + '">' +
       '<img src="' + esc(src) + '" alt="' + esc(alt) + '"' + (fb ? ' onerror="this.onerror=null;this.src=\'' + esc(fb) + '\';this.parentNode.dataset.src=this.src"' : "") + "></button><figcaption>" + esc(cap) + "</figcaption></figure>";
     const strip = '<div class="rep-strip">' +
-      zoomFig(rs.src, "Growth stage: " + s.stage + (rs.photo ? " · representative photo" : ""), s.stage, rs.fb,
-        "Growth stage: " + s.stage + (rs.photo ? " · representative photo, not of this site · " + rs.credit : "")) +
       zoomFig(svgURI(heightSVG(s.height_in, th)), "Height: " + s.height_in + " in", "Height schematic") +
       zoomFig(svgURI(coverSVG(s, th)), "Cover: " + (s.herbicide ? s.density_pct + "% weeds" : "turf only"), "Cover schematic") + "</div>";
     // Screening card: one row per check, one result each; the most serious result sets the status
