@@ -81,7 +81,7 @@ gis_source_data/    source GIS files (FHWA HPMS 2024, FHWA NHS 2021, IDOT milepo
 - **Illustrative:** unit costs in Operations Planning (labor, vehicle, drone, mower and boom-truck rates, herbicide prices; editable in the panel), weed patch outlines (their total area matches each site's weed cover), drone spray swaths (a planning assumption shown in the drone table), coverage paths and the priority score weights.
 - Demo regions:
   - Champaign–Urbana: I-74 (MP 169–197), I-57 (MP 218–257), US-45 north and south. 192 sites.
-  - Chicago area (Cook County): I-55 (MP 276–294), I-57 (MP 338–358), I-80 (MP 149–163). 100 sites.
+  - Chicago (Cook County): I-55 (MP 276–294), I-57 (MP 338–358), I-80 (MP 149–163). 100 sites.
 - Anywhere else in the U.S.: choose a state/county or search an interstate; road detail loads from FHWA when you zoom in.
 - To regenerate the data (from the repository root; the output is identical to the files in `data/`):
 

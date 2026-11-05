@@ -32,7 +32,7 @@ REGIONS = [
          ("US-45N", "US-45", "US Route 45 north (Urbana to Rantoul)", ["010  20800 000000"], None),
          ("US-45S", "US-45", "US Route 45 south (Champaign to Tolono)", ["010  20804 000000"], None)],
      "depots": ["543", "544"]},
-    {"id": "chicago", "code": "CHI", "name": "Chicago area (Cook County)", "county": 31, "origin": (41.70, -87.75),
+    {"id": "chicago", "code": "CHI", "name": "Chicago (Cook County)", "county": 31, "origin": (41.70, -87.75),
      "hpms": [f for f in hp_state if f["properties"]["county_id"] == 31],
      "corridors": [
          ("I-55", "I-55", "Interstate 55 (Stevenson Expressway)", ["016  10055 000000"], "016_10055_000000"),

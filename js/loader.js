@@ -68,7 +68,7 @@
   const FILES = [ // approximate sizes are used only when the server does not report Content-Length
     { src: "lib/leaflet/leaflet.js", size: 147552, label: "Map library" },
     { src: "data/hpms.js", size: 433648, label: "Highway network (FHWA HPMS 2024)" },
-    { src: "data/data.js", size: 610808, label: "Roadside sites and mileposts" },
+    { src: "data/data.js", size: 611831, label: "Roadside sites and mileposts" },
   ];
   // js/pages.js switches the simple pages until app.js is ready; here the progress card is shown on the map pages only
   const MAP_VIEWS = ["veg", "plan"];
