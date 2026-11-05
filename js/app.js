@@ -1420,7 +1420,7 @@
   }
   function goRoute() {
     const raw = $("locRoute").value.trim(), note = $("locNote");
-    if (!raw) { note.textContent = "Type a route, for example I-57."; return; }
+    if (!raw) { note.textContent = "Type a route name or number."; return; }
     const pr = parseRoute(raw);
     if (!pr) { note.textContent = "No vegetation data for " + raw + ". Routes with data: " + ALL_ROUTES.join(", ") + "."; return; }
     const route = pr.route;
