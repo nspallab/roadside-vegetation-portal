@@ -151,14 +151,12 @@
     <aside class="float-panel" id="panel-veg" data-for="veg" aria-label="Vegetation information controls">
       <div class="fp-top"><h2 class="fp-title">Vegetation Information</h2><button class="collapse" type="button" aria-expanded="true" aria-label="Minimize panel" title="Minimize panel"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 12.5 10 7.5 15 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
       <div class="fp-sec" data-fold="closed" data-sum="loc">
-        <h4>Location <i class="info" tabindex="0" role="img" aria-label="Vegetation data is available for Champaign County (Champaign–Urbana) and Cook County (Chicago area). Elsewhere the map shows roads only; road detail loads from FHWA when you zoom in." data-tip="Vegetation data is available for Champaign County (Champaign–Urbana) and Cook County (Chicago area). Elsewhere the map shows roads only; road detail loads from FHWA when you zoom in.">i</i></h4>
+        <h4>Location <i class="info" tabindex="0" role="img" aria-label="Vegetation data is available only for Champaign County (Champaign–Urbana) and Cook County (Chicago area), so other states and counties cannot be chosen yet. Choosing a route here also filters the site list." data-tip="Vegetation data is available only for Champaign County (Champaign–Urbana) and Cook County (Chicago area), so other states and counties cannot be chosen yet. Choosing a route here also filters the site list.">i</i></h4>
         <div class="grid2">
-          <label class="field"><span>State</span><select id="locState"><option value="">Choose a state…</option></select></label>
-          <label class="field"><span>County</span><select id="locCounty" disabled><option value="">Choose a state first</option></select></label>
+          <label class="field"><span>State</span><select id="locState"></select></label>
+          <label class="field"><span>County</span><select id="locCounty"></select></label>
         </div>
-        <label class="field"><span>Interstate</span>
-          <div class="search-row"><input type="text" id="locRoute" list="routeList" placeholder="e.g. I-80 or I-80 IL" autocomplete="off"><button class="btn btn-navy" id="locGo" type="button">Go</button></div>
-          <datalist id="routeList"></datalist></label>
+        <label class="field"><span>Route</span><select id="locRoute"></select></label>
         <p class="hint" id="locNote"></p>
       </div>
 

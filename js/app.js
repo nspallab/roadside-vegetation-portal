@@ -1347,9 +1347,6 @@
   /* ----------------------------------------------------- 9. find a location (state / county / interstate) */
   const STATES = [["01","Alabama"],["02","Alaska"],["04","Arizona"],["05","Arkansas"],["06","California"],["08","Colorado"],["09","Connecticut"],["10","Delaware"],["11","District of Columbia"],["12","Florida"],["13","Georgia"],["15","Hawaii"],["16","Idaho"],["17","Illinois"],["18","Indiana"],["19","Iowa"],["20","Kansas"],["21","Kentucky"],["22","Louisiana"],["23","Maine"],["24","Maryland"],["25","Massachusetts"],["26","Michigan"],["27","Minnesota"],["28","Mississippi"],["29","Missouri"],["30","Montana"],["31","Nebraska"],["32","Nevada"],["33","New Hampshire"],["34","New Jersey"],["35","New Mexico"],["36","New York"],["37","North Carolina"],["38","North Dakota"],["39","Ohio"],["40","Oklahoma"],["41","Oregon"],["42","Pennsylvania"],["44","Rhode Island"],["45","South Carolina"],["46","South Dakota"],["47","Tennessee"],["48","Texas"],["49","Utah"],["50","Vermont"],["51","Virginia"],["53","Washington"],["54","West Virginia"],["55","Wisconsin"],["56","Wyoming"]];
   const POOLED = ["06","08","17","18","20","26","27","28","29","38","42","48"]; // AMT pooled fund member states
-  $("locState").insertAdjacentHTML("beforeend",
-    '<optgroup label="AMT pooled fund states">' + STATES.filter((x) => POOLED.includes(x[0])).map((x) => '<option value="' + x[0] + '">' + x[1] + "</option>").join("") + "</optgroup>" +
-    '<optgroup label="All states">' + STATES.map((x) => '<option value="' + x[0] + '">' + x[1] + "</option>").join("") + "</optgroup>");
   const TIGER = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/";
   const outlineLayer = L.layerGroup().addTo(map);
   async function showBoundary(layerId, where, label) {
@@ -1364,23 +1361,6 @@
       job.done();
     } catch (e) { job.set(1, "could not reach Census TIGERweb"); setTimeout(() => job.done(), 2500); }
   }
-  $("locState").addEventListener("change", async () => {
-    const st = $("locState").value, cs = $("locCounty");
-    cs.disabled = true; cs.innerHTML = '<option value="">Loading counties…</option>';
-    if (!st) { cs.innerHTML = '<option value="">Choose a state first</option>'; return; }
-    showBoundary(0, "STATE='" + st + "'", "State boundary");
-    const job = LoadKit.Mini.start("County list");
-    try {
-      const txt = await LoadKit.fetchText(TIGER + "1/query?where=" + encodeURIComponent("STATE='" + st + "'") + "&outFields=NAME,GEOID&returnGeometry=false&orderByFields=NAME&f=json", 20000, (p) => job.set(p));
-      const j = JSON.parse(txt);
-      cs.innerHTML = '<option value="">All counties</option>' + (j.features || []).map((f) => '<option value="' + f.attributes.GEOID + '">' + esc(f.attributes.NAME) + "</option>").join("");
-      cs.disabled = false; job.done();
-    } catch (e) { cs.innerHTML = '<option value="">Could not load counties</option>'; job.set(1, "Census TIGERweb unavailable"); setTimeout(() => job.done(), 2500); }
-  });
-  $("locCounty").addEventListener("change", () => {
-    const g = $("locCounty").value;
-    if (g) showBoundary(1, "GEOID='" + g + "'", "County boundary"); else if ($("locState").value) showBoundary(0, "STATE='" + $("locState").value + "'", "State boundary");
-  });
 
   /* ----------------------------------------------------- image zoom (site card pictures) */
   const zoomBox = document.createElement("div");
@@ -1415,6 +1395,32 @@
   }
   fillRoutes();
   const planMode = () => document.querySelector('input[name="pMode"]:checked').value;
+
+  // ---- Vegetation Information > Location: same rule as planning. Only Illinois and the two counties with
+  //      vegetation data can be chosen; the rest are listed but disabled. Route also sets the screening route filter.
+  const COUNTY_GEOID = { Champaign: "17019", Cook: "17031" };
+  $("locState").innerHTML = STATES.map((x) => '<option value="' + x[0] + '"' + (x[0] === "17" ? " selected" : " disabled") + ">" + x[1] + (x[0] === "17" ? "" : NA) + "</option>").join("");
+  $("locCounty").innerHTML = '<option value="">Both demo counties</option>' +
+    IL_COUNTIES.map((c) => '<option value="' + c + '"' + (DATA_COUNTIES[c] ? "" : " disabled") + ">" + c + (DATA_COUNTIES[c] ? "" : NA) + "</option>").join("");
+  const locSites = () => { const r = DATA_COUNTIES[$("locCounty").value]; return D.sites.filter((x) => !r || x.region === r); };
+  function fillLocRoutes() {
+    const keep = $("locRoute").value;
+    const routes = [...new Set(locSites().map((x) => x.route))].sort();
+    $("locRoute").innerHTML = '<option value="all">All routes</option>' + routes.map((x) => '<option value="' + x + '">' + x + "</option>").join("");
+    $("locRoute").value = routes.includes(keep) ? keep : "all";
+  }
+  function goLocation() {
+    const route = $("locRoute").value, c = $("locCounty").value;
+    if ($("thRoute").value !== route) { $("thRoute").value = route; $("thRoute").dispatchEvent(new Event("input")); }
+    const pts = locSites().filter((x) => route === "all" || x.route === route).flatMap((x) => [x.coords[0], x.coords[x.coords.length - 1]]);
+    if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.08), fitPad());
+    if (c) showBoundary(1, "GEOID='" + COUNTY_GEOID[c] + "'", "County boundary"); else outlineLayer.clearLayers();
+    $("locNote").textContent = (c ? c + " County" : "Champaign and Cook counties") + (route === "all" ? "" : " · " + route) + ".";
+  }
+  fillLocRoutes();
+  $("locCounty").addEventListener("change", () => { fillLocRoutes(); goLocation(); });
+  $("locRoute").addEventListener("change", goLocation);
+  $("thRoute").addEventListener("change", () => { if ([...$("locRoute").options].some((o) => o.value === $("thRoute").value)) $("locRoute").value = $("thRoute").value; });
 
   // ---- drawn polygon
   let drawing = false, drawPts = [], drawPoly = null, placingDepot = false;
@@ -1649,30 +1655,6 @@
   const usLayer = L.layerGroup();
   let US = null;
   const syncUS = () => { if (US && $("lyrUS").checked && map.getZoom() < 9) usLayer.addTo(map); else map.removeLayer(usLayer); };
-  function buildRouteSearch() {
-    const opts = [];
-    Object.keys(US.index).sort((a, b) => parseInt(a.slice(2)) - parseInt(b.slice(2))).forEach((r) => {
-      opts.push(r); Object.keys(US.index[r]).sort().forEach((st) => opts.push(r + " " + st));
-    });
-    $("routeList").innerHTML = opts.map((o) => '<option value="' + o + '">').join("");
-  }
-  const hiLayer = L.layerGroup().addTo(map);
-  function goRoute() {
-    const q = $("locRoute").value.trim().toUpperCase().replace(/^I\s*-?\s*/, "I-");
-    const m = q.match(/^(I-\d+[A-Z]?)\s*([A-Z]{2})?$/);
-    hiLayer.clearLayers();
-    if (!US) { $("locNote").textContent = "The national interstate list is still loading. Try again in a moment."; return; }
-    if (!m || !US.index[m[1]]) { $("locNote").textContent = "Route not found. Try a form like I-80 or I-80 IL."; return; }
-    const boxes = m[2] ? [US.index[m[1]][m[2]]].filter(Boolean) : Object.values(US.index[m[1]]);
-    if (!boxes.length) { $("locNote").textContent = m[1] + " does not run through " + m[2] + "."; return; }
-    const b = L.latLngBounds(boxes.flatMap((x) => [[x[0], x[1]], [x[2], x[3]]]));
-    const num = m[1].slice(2);
-    US.lines.filter((l) => l[0] === num).forEach((l) => L.polyline(l[1], { color: "#fe6f1a", weight: 4, opacity: 0.85, renderer: canvasR, interactive: false }).addTo(hiLayer));
-    map.fitBounds(b.pad(0.05), fitPad());
-    $("locNote").textContent = "Showing " + m[1] + (m[2] ? " in " + m[2] : "") + ". Zoom in to load road detail from FHWA.";
-  }
-  $("locGo").addEventListener("click", goRoute);
-  $("locRoute").addEventListener("keydown", (e) => { if (e.key === "Enter") goRoute(); });
 
   const NHS_URL = "https://geo.dot.gov/server/rest/services/Hosted/National_Highway_System_(20210815)/FeatureServer/0/query";
   const nhsLayer = L.layerGroup();
@@ -1721,7 +1703,7 @@
       await LoadKit.loadScript("data/us_interstates.js", 1361375, (p) => job.set(p * 0.9, "downloading"));
       US = window.US_INTERSTATES;
       US.lines.forEach((l) => L.polyline(l[1], { color: "#2b3f5d", weight: 1.6, opacity: 0.55, renderer: canvasR, interactive: false }).addTo(usLayer));
-      buildRouteSearch(); syncUS(); job.done();
+      syncUS(); job.done();
     } catch (e) { job.set(1, "could not load"); setTimeout(() => job.done(), 2500); }
   }
 
@@ -1746,7 +1728,7 @@
 
   /* ---- Collapsible panel sections (data-fold="open|closed"); a folded section shows a one-line summary ---- */
   const FOLD_SUM = {
-    loc: () => ($("locState").value ? $("locState").selectedOptions[0].textContent + ($("locCounty").value ? ", " + $("locCounty").selectedOptions[0].textContent : "") : "Demo areas"),
+    loc: () => "Illinois · " + ($("locCounty").value ? $("locCounty").value + " County" : "both counties") + ($("locRoute").value !== "all" ? " · " + $("locRoute").value : ""),
     layers: () => { const c = [...$("panel-veg").querySelectorAll('[data-sum="layers"] input[type="checkbox"]')]; return c.filter((x) => x.checked).length + " of " + c.length + " on"; },
     cost: () => (document.querySelector('input[name="pBudgetMode"]:checked').value === "max" ? "Budget " + money(+$("pBudget").value || 0) : "No budget limit") + " · $" + $("cLabor").value + "/h labor",
     ops: () => dayDate($("pDate").value, 1) + " · " + $("pStart").value + " · " + $("pHours").value + " h · wind " + $("pWind").value + " mph",
@@ -1767,7 +1749,7 @@
     h.appendChild(b);
     set(sec.dataset.fold !== "closed");
   });
-  ["locState", "locCounty", "pDate", "pStart", "pHours", "pWind"].forEach((id) => $(id).addEventListener("change", syncFoldSums));
+  ["locState", "locCounty", "locRoute", "pDate", "pStart", "pHours", "pWind"].forEach((id) => $(id).addEventListener("change", syncFoldSums));
   $("panel-veg").querySelectorAll('[data-sum="layers"] input').forEach((c) => c.addEventListener("change", syncFoldSums));
 
   syncOutputs();
