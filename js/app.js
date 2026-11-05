@@ -1489,6 +1489,8 @@
   }
   // ---- Recommendations card: every flagged site in the selection with its recommended action.
   //      All sites start ticked; untick a site to leave it out of the plan (overrides[id] = "skip").
+  //      The menu changes the action (overrides[id] = action); actionOf remembers it while a site is unticked.
+  const actionOf = {};
   const REC_TILES = { spray: ["Drone spray", "--a-spray"], mow: ["Mow", "--a-mow"], inspect: ["Inspect", "--a-inspect"], skip: ["Left out", "--muted"] };
   state.recFilter = null;
   let recShown = []; // ids of the rows currently listed (after the tile filter)
@@ -1509,12 +1511,14 @@
     $("recAllLbl").textContent = state.recFilter ? "Select all shown" : "Select all";
     $("recCount").textContent = picked + " of " + pool.length + " selected";
     $("recList").innerHTML = list.map((s) => {
-      const inPlan = overrides[s.id] !== "skip", a = s._auto.action;
+      const inPlan = overrides[s.id] !== "skip", a = actionOf[s.id] || s._auto.action;
       return '<li data-id="' + s.id + '" class="' + (inPlan ? "" : "off") + '">' +
         '<input type="checkbox" class="rec-tick" data-id="' + s.id + '"' + (inPlan ? " checked" : "") + ' aria-label="Include ' + esc(s.route + " " + s.dir + " " + s.label) + ' in the plan">' +
         shield(s.route) + '<div tabindex="0"><div class="sid">' + esc(s.route + " " + s.dir + " · " + s.label) + '</div><div class="why">' +
-        esc(inPlan ? s._auto.why : "Left out of the plan") + "</div></div>" + priBadge(s._pri.score) +
-        '<span class="act-tag" style="--c:var(' + ACTION[a].v + ')">' + ACTION[a].label + "</span></li>";
+        esc(!inPlan ? "Left out of the plan" : s._rec ? s._rec.why : s._auto.why) + "</div></div>" + priBadge(s._pri.score) +
+        '<select data-id="' + s.id + '" aria-label="Action for ' + esc(s.id) + '" class="act-sel' + (a !== s._auto.action ? " changed" : "") + '"' + (inPlan ? "" : " disabled") + ">" +
+        ["spray", "mow", "inspect"].map((x) => '<option value="' + x + '"' + (x === a ? " selected" : "") + ">" + ACTION[x].label + (x === s._auto.action ? " (recommended)" : "") + "</option>").join("") +
+        "</select></li>";
     }).join("") || '<li class="empty">' + (sel.ok ? "No flagged sites in this group." : esc(sel.msg)) + "</li>";
   }
   function showRecs() { $("drawer").hidden = true; state.selected = null; $("planOut").hidden = true; $("recCard").hidden = false; renderSites(); }
@@ -1527,16 +1531,25 @@
   $("recSummary").addEventListener("click", (e) => { const t = e.target.closest(".stat"); if (!t) return; state.recFilter = state.recFilter === t.dataset.a ? null : t.dataset.a; renderRecs(); });
   $("recAll").addEventListener("change", () => {
     const on = $("recAll").checked;
-    recShown.forEach((id) => { if (on) delete overrides[id]; else overrides[id] = "skip"; });
+    recShown.forEach((id) => setTick(id, on));
     recChanged();
   });
+  function setTick(id, on) {
+    const a = actionOf[id];
+    if (!on) overrides[id] = "skip";
+    else if (a && a !== byId[id]._auto.action) overrides[id] = a;
+    else delete overrides[id];
+  }
   $("recList").addEventListener("change", (e) => {
-    const t = e.target.closest(".rec-tick"); if (!t) return;
-    if (t.checked) delete overrides[t.dataset.id]; else overrides[t.dataset.id] = "skip";
+    const t = e.target.closest(".rec-tick");
+    if (t) { setTick(t.dataset.id, t.checked); recChanged(); return; }
+    const sel = e.target.closest("select[data-id]"); if (!sel) return;
+    const s = byId[sel.dataset.id];
+    if (sel.value === s._auto.action) { delete actionOf[s.id]; delete overrides[s.id]; } else { actionOf[s.id] = sel.value; overrides[s.id] = sel.value; }
     recChanged();
   });
-  $("recList").addEventListener("click", (e) => { if (e.target.closest("input")) return; const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); });
-  $("recList").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.target.closest("input")) { const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); } });
+  $("recList").addEventListener("click", (e) => { if (e.target.closest("input, select")) return; const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); });
+  $("recList").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.target.closest("input, select")) { const li = e.target.closest("li[data-id]"); if (li) focusSite(li.dataset.id); } });
 
   document.querySelectorAll('input[name="pMode"]').forEach((r) => r.addEventListener("change", () => {
     const m = planMode();
