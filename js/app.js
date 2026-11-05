@@ -317,7 +317,9 @@
     "Noxious broadleaf": "noxious-broadleaf", "Invasive broadleaf": "invasive-broadleaf", "Noxious grass": "noxious-grass",
     "Invasive grass": "invasive-grass", "Woody brush": "woody-brush", "Turf grass (desirable)": "turf",
   };
-  /* ---- Representative photos: Wikimedia Commons, open licenses (hotlinked; attribution shown on Home page and in the site card).
+  /* ---- Representative photos. Vegetation classes: project photos in img/vegetation/photos/class/<class>.jpg.
+     Growth stages: Wikimedia Commons, open licenses (hotlinked; attribution shown on Home page and in the site card).
+     Each entry: [image URL or path, title, credit, licence, source page or null].
      Every class and stage has a photo; the illustration is only a fallback if a photo cannot load. ---- */
   const LIC_URL = {
     "CC BY 2.0": "https://creativecommons.org/licenses/by/2.0/", "CC BY 2.5": "https://creativecommons.org/licenses/by/2.5/",
@@ -326,12 +328,12 @@
     "CC BY-SA 4.0": "https://creativecommons.org/licenses/by-sa/4.0/", "CC0": "https://creativecommons.org/publicdomain/zero/1.0/", "Public domain": "https://creativecommons.org/publicdomain/mark/1.0/",
   };
   const PHOTOS = {
-    "class/noxious-broadleaf": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8b/Cirsium_arvense_2025-07-23-4.jpg/960px-Cirsium_arvense_2025-07-23-4.jpg", "Canada thistle (Cirsium arvense)", "Renée Kools", "CC BY 4.0", "https://commons.wikimedia.org/wiki/File:Cirsium_arvense_2025-07-23-4.jpg"],
-    "class/invasive-broadleaf": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0f/Pastinaca_sativa_146613743.jpg/960px-Pastinaca_sativa_146613743.jpg", "Wild parsnip (Pastinaca sativa)", "Силаева Татьяна Борисовна", "CC0", "https://commons.wikimedia.org/wiki/File:Pastinaca_sativa_146613743.jpg"],
-    "class/noxious-grass": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/6/63/Sorghum_halepense-Sorgho_d%27Alep-20150622.jpg/960px-Sorghum_halepense-Sorgho_d%27Alep-20150622.jpg", "Johnsongrass (Sorghum halepense)", "Daniel Villafruela", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File:Sorghum_halepense-Sorgho_d%27Alep-20150622.jpg"],
-    "class/invasive-grass": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/Phalaris_arundinacea_-_reed_canary_grass_0158.jpg/960px-Phalaris_arundinacea_-_reed_canary_grass_0158.jpg", "Reed canary grass (Phalaris arundinacea)", "R. A. Nonenmacher", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File:Phalaris_arundinacea_-_reed_canary_grass_0158.jpg"],
-    "class/woody-brush": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Lonicera_maackii_640437988.jpg/960px-Lonicera_maackii_640437988.jpg", "Amur honeysuckle thicket (Lonicera maackii)", "Alex Abair", "CC BY 4.0", "https://commons.wikimedia.org/wiki/File:Lonicera_maackii_640437988.jpg"],
-    "class/turf": ["https://upload.wikimedia.org/wikipedia/commons/3/37/Grass_verge_by_the_B7066_-_geograph.org.uk_-_1538953.jpg", "Mowed grass verge beside a road", "Jim Smillie", "CC BY-SA 2.0", "https://commons.wikimedia.org/wiki/File:Grass_verge_by_the_B7066_-_geograph.org.uk_-_1538953.jpg"],
+    "class/noxious-broadleaf": ["img/vegetation/photos/class/noxious-broadleaf.jpg", "Canada thistle stand", "Project team", "Project photo", null],
+    "class/invasive-broadleaf": ["img/vegetation/photos/class/invasive-broadleaf.jpg", "Broadleaf plantain (Plantago major)", "Project team", "Project photo", null],
+    "class/noxious-grass": ["img/vegetation/photos/class/noxious-grass.jpg", "Tall clump-forming grass", "Project team", "Project photo", null],
+    "class/invasive-grass": ["img/vegetation/photos/class/invasive-grass.jpg", "Reed canary grass, ribbon grass form (Phalaris arundinacea)", "Project team", "Project photo", null],
+    "class/woody-brush": ["img/vegetation/photos/class/woody-brush.jpg", "Woody groundcover with vine seedlings", "Project team", "Project photo", null],
+    "class/turf": ["img/vegetation/photos/class/turf.jpg", "Roadside turf strip with scattered weeds", "Project team", "Project photo", null],
     "stage/rosette": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/Cirsium_vulgare_%28Speerdistel%29_-_Noordwijk%2C_South_Holland%2C_NL.jpg/960px-Cirsium_vulgare_%28Speerdistel%29_-_Noordwijk%2C_South_Holland%2C_NL.jpg", "Thistle rosette (Cirsium vulgare)", "Rudolphous", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File:Cirsium_vulgare_(Speerdistel)_-_Noordwijk,_South_Holland,_NL.jpg"],
     "stage/fall-regrowth": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Cirsium_vulgare_at_Jalovec_in_%C4%8C%C3%ADchov%2C_T%C5%99eb%C3%AD%C4%8D_District.jpg/960px-Cirsium_vulgare_at_Jalovec_in_%C4%8C%C3%ADchov%2C_T%C5%99eb%C3%AD%C4%8D_District.jpg", "Thistle regrowth rosette (Cirsium vulgare)", "Jiří Sedláček", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File:Cirsium_vulgare_at_Jalovec_in_%C4%8C%C3%ADchov,_T%C5%99eb%C3%AD%C4%8D_District.jpg"],
     "stage/vegetative": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ee/Phalaris_arundinacea_HojasyTallo_2010-8-29_SierraMadrona.jpg/960px-Phalaris_arundinacea_HojasyTallo_2010-8-29_SierraMadrona.jpg", "Leafy grass stems before heading (Phalaris arundinacea)", "Javier Martín", "Public domain", "https://commons.wikimedia.org/wiki/File:Phalaris_arundinacea_HojasyTallo_2010-8-29_SierraMadrona.jpg"],
@@ -572,7 +574,7 @@
       : linked(rc, imgTag(rc, "", "Representative " + (rc.photo ? "photo" : "illustration") + " of " + s.vclass)) +
         '<span class="rep-tag">Representative ' + (rc.photo ? "photo" : "image") + " · not of this site</span>";
     const photoCredit = !s._photo && rc.photo
-      ? '<p class="credit-line">' + esc(rc.title) + " · " + esc(rc.credit) + ' · <a href="' + rc.page + '" target="_blank" rel="noopener">View source ↗</a></p>' : "";
+      ? '<p class="credit-line">' + esc(rc.title) + " · " + esc(rc.credit) + (rc.page ? ' · <a href="' + rc.page + '" target="_blank" rel="noopener">View source ↗</a>' : "") + "</p>" : "";
     // Ground photo (uploaded or representative) and the drone view (aerial imagery of this site with its strip and weed patches)
     const g = siteGeom(s), lastDrone = s.history.filter((e) => /drone/i.test(e.type) && /inspection/i.test(e.type)).pop();
     const gallery = '<div class="toggle gal-tabs" role="tablist" aria-label="Site images">' +
@@ -1741,7 +1743,7 @@
 
   /* ----------------------------------------------------- 11. photo credits (Home page) */
   $("credits").innerHTML = Object.entries(PHOTOS).map(([k, ph]) =>
-    '<li><a href="' + ph[4] + '" target="_blank" rel="noopener">' + esc(ph[1]) + "</a> — " + esc(ph[2]) + ", " +
+    "<li>" + (ph[4] ? '<a href="' + ph[4] + '" target="_blank" rel="noopener">' + esc(ph[1]) + "</a>" : esc(ph[1])) + " — " + esc(ph[2]) + ", " +
     (LIC_URL[ph[3]] ? '<a href="' + LIC_URL[ph[3]] + '" target="_blank" rel="noopener">' + esc(ph[3]) + "</a>" : esc(ph[3])) +
     ' <span class="muted">(' + esc(k.replace("/", ": ")) + ")</span></li>").join("") +
     '<li class="muted">Height and cover schematics are drawn by the portal.</li>';

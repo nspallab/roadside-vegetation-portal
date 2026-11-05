@@ -472,7 +472,7 @@ input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-dat
 .rec-list li { cursor: default; display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 4px 9px; align-items: center; }
 .rec-list li.empty { display: block; }
 .rec-list li.off > :not(.rec-tick) { opacity: .45; }
-.rec-tick, .rec-bar input { width: 18px; height: 18px; margin: 0; accent-color: var(--orange); cursor: pointer; }
+.rec-tick, .rec-bar input { width: 14px; height: 14px; margin: 0; accent-color: var(--orange); cursor: pointer; }
 .rec-list .act-sel { grid-column: 3 / 5; max-width: none; width: 100%; min-height: 32px !important; font-size: 12.5px; padding: 2px 4px;
   border: 1px solid var(--field-line); border-radius: 6px; background: #fff; }
 .rec-list .act-sel.changed { border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }

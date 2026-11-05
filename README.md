@@ -23,7 +23,7 @@ python -m http.server 8000
 
 Then open http://localhost:8000 in a browser.
 
-You need an internet connection for the map background (Esri tiles, no API key), web fonts, the representative photos (Wikimedia Commons), and on-demand road detail (FHWA) and county lookups (Census TIGERweb). Everything else works offline.
+You need an internet connection for the map background (Esri tiles, no API key), web fonts, the growth-stage photos (Wikimedia Commons), and on-demand road detail (FHWA) and county lookups (Census TIGERweb). Everything else works offline.
 
 A circular progress ring shows loading progress at startup and for background jobs.
 
@@ -55,7 +55,7 @@ data/data.js        sites (Champaign + Chicago), routing network, mileposts (gen
 data/hpms.js        HPMS 2024 highway network layer (generated)
 data/us_interstates.js  national interstate overview + route search index (generated)
 data/us_states.js   lower-48 state outlines for the Team map (generated)
-img/vegetation/     illustrations (photos are linked from Wikimedia Commons)
+img/vegetation/     vegetation class photos (photos/class/), fallback illustrations; see its README
 img/drones/         product images for the Drone Technology page
 img/drones/3d/      3D drone models (.glb), built by tools/gen_drones_blender.py
 img/hero-drone.webp Home page hero image (ARES model render, tools/render_hero.py)
@@ -101,7 +101,7 @@ The navy header band and orange navigation bar use the University of Illinois co
 
 ## Photos
 
-Representative photos come from Wikimedia Commons (CC BY, CC BY-SA, CC0 or public domain). Every vegetation class and growth stage has a photo. Credits are listed on the Home page and in each site card, with links to the source pages. The illustrations in `img/vegetation/` are only a fallback if a photo cannot load.
+Vegetation class photos are project photos in `img/vegetation/photos/class/`. Growth-stage photos come from Wikimedia Commons (CC BY, CC BY-SA, CC0 or public domain) and are linked from `js/app.js`. Credits are listed on the Home page and in each site card. The illustrations are only a fallback if a photo cannot load. See `img/vegetation/README.md` for how to change an image.
 
 ## Next steps (back end)
 
