@@ -1343,7 +1343,7 @@
     $("panel-veg").hidden = v !== "veg";
     $("panel-plan").hidden = v !== "plan";
     if (v !== "plan") { $("planOut").hidden = true; if (typeof syncPlanSketch === "function") syncPlanSketch(); }
-    else { if (state.plan) $("planOut").hidden = false; else if (planSel().ok) $("recCard").hidden = false; if (typeof syncPlanSketch === "function") syncPlanSketch(); }
+    else { if (state.plan) $("planOut").hidden = false; if (typeof syncPlanSketch === "function") syncPlanSketch(); }
     if (onMap) {
       map.invalidateSize();
       if (!fitted) { fitAllSites(); fitted = true; }
@@ -1551,7 +1551,6 @@
   function onPlanAreaChange(fit) {
     const sel = planSel();
     if (state.plan) { state.plan = null; state.tl = null; stopPlay(); planLayer.clearLayers(); coverLayer.clearLayers(); $("planOut").hidden = true; } // selection changed: old plan no longer applies
-    if (state.view === "plan" && sel.ok && $("drawer").hidden) $("recCard").hidden = false;
     if (sel.ok) setRegion(sel.region);
     renderSites(); // screens the sites first, so the flagged count below is current
     const { flagged } = syncPlanReady();
