@@ -1,17 +1,29 @@
 /* Simple pages, loaded first so they appear at once even on a slow phone connection,
    before Leaflet and the ~1 MB map data arrive:
-   - switches Home / Drone Technology / Team until app.js takes over (window.Pages.ready = true)
-   - builds the Drone Technology table. window.DRONES is also used by app.js for planning
+   - switches Home / Resources / Team until app.js takes over (window.Pages.ready = true); app.js reuses Pages.sync
+   - builds the drone table on the Resources page. window.DRONES is also used by app.js for planning
      (it overrides the copy in data/data.js). swath_m (spray passes) and cost_hr (ownership cost per flight hour) are planning assumptions, not spec-sheet values. */
 (function () {
   "use strict";
-  const VIEWS = ["home", "veg", "plan", "drones", "team"];
-  window.Pages = { ready: false, MAP_VIEWS: ["veg", "plan"] };
+  const VIEWS = ["home", "veg", "plan", "drones", "herbicides", "team"];
+  const PAGE = { herbicides: "drones" }; // the Resources page holds two tabs: Drone technology (#drones) and Herbicides (#herbicides)
+  // show the page for view v: nav highlight, page, and the Resources tab
+  let last = null;
+  function sync(v) {
+    const pg = PAGE[v] || v;
+    document.querySelectorAll(".navbar a").forEach((a) => (a.dataset.view === pg ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
+    document.querySelectorAll("[data-page]").forEach((p) => (p.hidden = p.dataset.page !== pg));
+    document.querySelectorAll(".subtabs a").forEach((a) => (a.dataset.sub === v ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
+    document.querySelectorAll(".subpanel").forEach((p) => (p.hidden = p.dataset.sub !== v));
+    // another tab of the same page opens at the top, not at the old tab's scroll position
+    if (last && last !== v && (PAGE[last] || last) === pg) { const p = document.querySelector('[data-page="' + pg + '"]'); if (p) p.scrollTop = 0; }
+    last = v;
+  }
+  window.Pages = { ready: false, MAP_VIEWS: ["veg", "plan"], VIEWS, sync };
   function show() {
     if (window.Pages.ready) return;
     let v = location.hash.slice(1); if (!VIEWS.includes(v)) v = "home";
-    document.querySelectorAll(".navbar a").forEach((a) => (a.dataset.view === v ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
-    document.querySelectorAll("[data-page]").forEach((p) => (p.hidden = p.dataset.page !== v));
+    sync(v);
   }
   window.addEventListener("hashchange", show);
   // Home "Demo areas" cards: open the vegetation map with that county chosen (applied by app.js, now or once it loads)
