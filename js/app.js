@@ -747,13 +747,13 @@
   const HERB_PRICE = { aminopyralid: 400, triclopyr_24d: 70, glyphosate: 35, imazapic: 320 }; // $/gal of product, illustrative
   // general product facts for the Resources > Herbicides tab (WSSA mode-of-action group, type, timing, main caution)
   const HERB_INFO = {
-    aminopyralid: { group: "Group 4 · synthetic auxin", tags: ["Selective: broadleaf", "Systemic", "Post-emergent", "Soil residual"],
+    aminopyralid: { group: "Synthetic auxin", tags: ["Selective: broadleaf", "Systemic", "Post-emergent", "Soil residual"],
       timing: "Rosette to bolting, or fall regrowth", caution: "Stays active in treated hay, manure and compost; keep it away from susceptible crops and gardens." },
-    triclopyr_24d: { group: "Group 4 · synthetic auxins", tags: ["Selective: broadleaf and woody", "Systemic", "Post-emergent"],
+    triclopyr_24d: { group: "Synthetic auxins", tags: ["Selective: broadleaf and woody", "Systemic", "Post-emergent"],
       timing: "Actively growing weeds and brush in full leaf", caution: "Drift and vapour can injure nearby crops, trees and gardens; avoid hot, windy days." },
-    glyphosate: { group: "Group 9 · EPSP synthase inhibitor", tags: ["Non-selective", "Systemic", "Post-emergent", "No soil activity"],
+    glyphosate: { group: "EPSP synthase inhibitor", tags: ["Non-selective", "Systemic", "Post-emergent", "No soil activity"],
       timing: "Actively growing grass, before seed heads form", caution: "Kills desirable grass too, so spot treatment only; use an aquatic formulation near water." },
-    imazapic: { group: "Group 2 · ALS inhibitor", tags: ["Selective: some grasses and broadleaves", "Systemic", "Pre- and post-emergent", "Soil residual"],
+    imazapic: { group: "ALS inhibitor", tags: ["Selective: some grasses and broadleaves", "Systemic", "Pre- and post-emergent", "Soil residual"],
       timing: "Before or soon after weeds emerge", caution: "Soil residual can injure some newly seeded plants; many native warm-season grasses tolerate it." },
   };
   function readCosts() {
@@ -1829,7 +1829,7 @@
       const info = HERB_INFO[k] || { group: "", tags: [], timing: "", caution: "" }, price = HERB_PRICE[k] || 0;
       const species = {}; D.sites.forEach((s) => { if (s.herbicide === k) species[s.species] = (species[s.species] || 0) + 1; });
       const n = Object.values(species).reduce((a, b) => a + b, 0);
-      return '<article class="herb"><header><h3>' + esc(h.name) + '</h3><span class="hgroup">' + esc(info.group) + "</span></header>" +
+      return '<article class="herb"><header><h3>' + esc(h.name) + '</h3><span class="hgroup" title="Mode of action">' + esc(info.group) + "</span></header>" +
         '<ul class="htags">' + info.tags.map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul>" +
         '<dl class="hstats"><div><dt>Rate</dt><dd>' + rateTxt(h.rate_gal_ac) + "</dd></div><div><dt>Price</dt><dd>" + money(price) + "/gal</dd></div><div><dt>Product cost</dt><dd>" +
         money(h.rate_gal_ac * price) + "/acre</dd></div></dl>" +

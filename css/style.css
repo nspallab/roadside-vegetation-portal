@@ -56,10 +56,17 @@ a { color: inherit; }
 .divider { width: 2px; align-self: stretch; background: rgba(255,255,255,.85); }
 .wordmark { font-family: var(--f-head); font-weight: 700; font-size: 26px; letter-spacing: .01em; line-height: 1.05; display: flex; flex-direction: column; }
 .wordmark small { font-family: var(--f-body); font-weight: 600; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .8; margin-top: 4px; }
-.navbar { background: var(--orange); display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 48px; padding-block: 11px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-.navbar a { color: #fff; text-decoration: none; font-family: var(--f-body); font-weight: 600; font-size: 16px; padding: 2px 0; }
-.navbar a:hover { color: var(--navy); }
-.navbar a[aria-current="page"] { color: var(--navy); }
+/* Main navigation as tabs: thin dividers between items, a hover shade, and the current page as a light tab
+   joined to the page below, so it is clear each item can be clicked */
+.navbar { background: var(--orange); display: flex; justify-content: center; align-items: flex-end; flex-wrap: wrap; gap: 0; padding-top: 8px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.navbar a { position: relative; color: #fff; text-decoration: none; font-family: var(--f-body); font-weight: 600; font-size: 16px;
+  padding: 10px 28px 12px; border-radius: 10px 10px 0 0; transition: background .15s, color .15s; }
+.navbar a + a::before { content: ""; position: absolute; left: 0; top: 30%; bottom: 30%; width: 1px; background: rgba(255, 255, 255, .55); }
+.navbar a[aria-current="page"]::before, .navbar a[aria-current="page"] + a::before { display: none; }
+.navbar a:hover { background: rgba(43, 63, 93, .16); }
+.navbar a[aria-current="page"] { background: #eef3f9; color: var(--navy); box-shadow: 0 -2px 6px rgba(0, 0, 0, .08); }
+.navbar a:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
 
 main { flex: 1; min-height: 0; position: relative; }
 
@@ -371,7 +378,7 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
   .facts { grid-template-columns: 1fr; }
   .wordmark { font-size: 19px; }
   .logo, .logo-fallback { height: 40px; }
-  .navbar { gap: 4px 18px; }
+  .navbar a { padding: 9px 14px 10px; font-size: 15px; }
 }
 @media (max-width: 520px) { .cards4, .cards3 { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, 1fr); } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -810,8 +817,9 @@ a.feature:hover .f-go svg { transform: translateX(3px); }
 .htargets > span { color: #6b7280; font-weight: 600; margin-right: 2px; }
 .htargets i { font-style: normal; padding: 2px 9px; border: 1px solid #d9dee6; border-radius: 999px; color: #374151; }
 .htargets b { margin-left: auto; font-size: 12.5px; color: #4b5563; }
-.hrow { margin: 0; font-size: 13.5px; line-height: 1.5; color: #374151; }
-.hrow b { display: inline-block; min-width: 86px; margin-right: 6px; color: var(--navy); }
+/* label and text in two columns, same left edges in the plain and the highlighted (caution) row */
+.hrow { margin: 0; font-size: 13.5px; line-height: 1.5; color: #374151; display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; padding: 0 10px; }
+.hrow b { color: var(--navy); }
 .hrow.caution { padding: 7px 10px; border-radius: 8px; background: var(--warn-bg); color: var(--warn-ink); }
 .hrow.caution b { color: inherit; }
 
