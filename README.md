@@ -37,8 +37,8 @@ The header uses a placeholder mark. To use the official University of Illinois B
 |---|---|
 | **Home** | Hero with the main actions, a live snapshot of the demo network (sites, miles, acres, sites needing control), links to the three tools, the demo areas and a short project summary. Reading pages share a footer with data sources. |
 | **Vegetation Information** | Roadside sites in both demo areas (Champaign and Chicago), shown together. Zoom in to see each site's roadside vegetation area (the 30 ft right-of-way strip) and, closer still, the weed patches inside it. Click a segment or area for vegetation type, height, cover, growth stage, a priority score, a ground photo and a drone view (satellite imagery of the site with its strip and patches), and the inspection and control history. Add records (optionally with a new height, cover or stage), attach photos, upload field updates as CSV or GeoJSON (rows with a `site_id` update that site and add records; the template button gives an example), export the site layer, and screen the network with adjustable triggers. The site list ranks flagged sites by priority. |
-| **Operations Planning** | Choose the sites by location (state → county → route, or all routes), by drawing an area on the map, or by picking sites. The Recommended actions card lists each flagged site with its action (drone spot spraying, mowing or further inspection) and reason; the planner can change or drop any of them. Crews start from IDOT maintenance yards (or a place you put on the map). Other inputs: drone model, number of crews, work hours, wind and spray volume. Outputs: routes on the map, schedule, duration and herbicide use, plus a timeline (Gantt chart and Play slider) that moves each crew along its route. Zoomed in, the map shows the drone's spray passes over the weed patches and the mower's passes along the strip. Costs and budget: every plan, crew and site gets an estimated cost (crew labor, drone or mower time, herbicide, vehicle travel), with a comparison against ground boom-truck spraying of the same sites. With a maximum budget, the plan keeps the highest-priority sites that fit and defers the rest. Exports schedule (CSV, with costs) and routes (GeoJSON). |
-| **Drone Technology** | Interactive 3D models of the three spray drones (drag to turn, spinning rotors, spray-system highlight, part names on hover), the market survey table (Task 1.2) and key FAA rules. |
+| **Operations Planning** | Choose the sites by location (state → county → route, or all routes), by drawing an area on the map, or by picking sites. The Recommended actions card lists each flagged site with its action (drone spot spraying, mowing or further inspection) and reason; the planner can change or drop any of them. Crews start from IDOT maintenance yards (or a place you put on the map). Other inputs: drone model, number of crews, work hours, wind and spray volume. Outputs: routes on the map, schedule, duration and herbicide use, plus a timeline (Gantt chart and Play slider) that moves each crew along its route. Zoomed in, the map shows the drone's spray passes over the weed patches and the mower's passes along the strip. Costs and budget: every plan, crew and site gets an estimated cost (crew labor, drone or mower time, herbicide, vehicle travel). The plan card charts the cost split, the cost of each action, and drone spraying against ground boom-truck spraying of the same sites. With a maximum budget, the plan keeps the highest-priority sites that fit and defers the rest. Exports schedule (CSV, with costs) and routes (GeoJSON). |
+| **Resources** | Two tabs. **Drone technology** (`#drones`): interactive 3D models of the three spray drones (drag to turn, spinning rotors, spray-system highlight, part names on hover), the market survey table (Task 1.2) and key FAA rules. **Herbicides** (`#herbicides`): how herbicide types differ (selective or non-selective, systemic or contact, post- or pre-emergent, persistent or short-lived) and a card for each herbicide the planner uses, with its mode-of-action group, rate, price, cost per acre, the target species in the demo data, timing and main caution. |
 | **Team** | Faculty and researchers at the University of Illinois, IDOT contacts and pooled fund chairs, and a map of the 12 pooled fund member states with Indiana DOT as lead agency. Headshots are in `img/team/<first-last>.jpg` (square, 400 px): faculty from the CEE directory, Prof. Ouyang's students from his group page, and Tina Radvand from the team. A profile without a photo shows initials. |
 
 ## Files
@@ -46,17 +46,17 @@ The header uses a placeholder mark. To use the official University of Illinois B
 ```
 index.html          page layout
 css/style.css       design
-js/app.js           map, screening rules, planning heuristic
-js/pages.js         loads first: switches the simple pages, builds the drone table (drone specs live here)
+js/app.js           map, screening rules, planning heuristic, herbicide cards (Resources)
+js/pages.js         loads first: switches the simple pages and the Resources tabs, builds the drone table (drone specs live here)
 js/loader.js        progress ring; loads Leaflet and the data files, then js/app.js
-js/drones3d.js      3D drone viewer; loads three.js only when the Drone Technology page opens
+js/drones3d.js      3D drone viewer; loads three.js only when the Drone technology tab opens
 js/team.js          member-state map on the Team page; loads data/us_states.js only when the page opens
 data/data.js        sites (Champaign + Chicago), routing network, mileposts (generated)
 data/hpms.js        HPMS 2024 highway network layer (generated)
 data/us_interstates.js  national interstate overview + route search index (generated)
 data/us_states.js   lower-48 state outlines for the Team map (generated)
 img/vegetation/     vegetation class photos (photos/class/), fallback illustrations; see its README
-img/drones/         product images for the Drone Technology page
+img/drones/         product images for the Drone technology tab
 img/drones/3d/      3D drone models (.glb), built by tools/gen_drones_blender.py
 img/hero-drone.webp Home page hero image (ARES model render, tools/render_hero.py)
 lib/leaflet/        Leaflet 1.9.4 map library (local copy)
@@ -77,6 +77,7 @@ gis_source_data/    source GIS files (FHWA HPMS 2024, FHWA NHS 2021, IDOT milepo
   - Drone view imagery: Esri World Imagery, standing in for the project's drone orthomosaics.
   - State outlines on the Team page: Census TIGERweb (generalized), `gis_source_data/Census_States`.
   - Drone specifications: the project's market survey.
+- **General reference:** the herbicide facts on the Resources page (mode-of-action group, type, timing, cautions) are short summaries, not label instructions.
 - **Example data:** vegetation, inspection and control history, and herbicide rates. Replace these when IDOT or field data arrives.
 - **Illustrative:** unit costs in Operations Planning (labor, vehicle, drone, mower and boom-truck rates, herbicide prices; editable in the panel), weed patch outlines (their total area matches each site's weed cover), drone spray swaths (a planning assumption shown in the drone table), coverage paths and the priority score weights.
 - Demo regions:
@@ -97,7 +98,7 @@ blender -b --factory-startup --python tools/gen_drones_blender.py -- img/drones/
 
 ## Design
 
-The navy header band and orange navigation bar use the University of Illinois colours and stay as they are. Reading pages (Home, Drone Technology, Team) are full width: each section is a band across the window with its content in a centred column up to 1440 px. Elsewhere, orange text and filled buttons use UIUC Altgeld orange (`--orange-ink`, #C84113, 4.97:1 on white) so they meet WCAG AA contrast; Illini Orange stays for accents. Fonts are Montserrat (headings) and Source Sans 3 (body). Interactive targets are at least 24 px, focus rings are visible, a skip link appears on keyboard focus, and motion respects reduced-motion settings.
+The navy header band and orange navigation bar use the University of Illinois colours and stay as they are. Reading pages (Home, Resources, Team) are full width: each section is a band across the window with its content in a centred column up to 1440 px. Elsewhere, orange text and filled buttons use UIUC Altgeld orange (`--orange-ink`, #C84113, 4.97:1 on white) so they meet WCAG AA contrast; Illini Orange stays for accents. Fonts are Montserrat (headings) and Source Sans 3 (body). Interactive targets are at least 24 px, focus rings are visible, a skip link appears on keyboard focus, and motion respects reduced-motion settings.
 
 ## Photos
 

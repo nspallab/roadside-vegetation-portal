@@ -745,6 +745,17 @@
   const CREW_SIZE = { spray: 2, mow: 1, inspect: 1 };
   const BOOM = { crew: 2, acPerH: 6 };
   const HERB_PRICE = { aminopyralid: 400, triclopyr_24d: 70, glyphosate: 35, imazapic: 320 }; // $/gal of product, illustrative
+  // general product facts for the Resources > Herbicides tab (WSSA mode-of-action group, type, timing, main caution)
+  const HERB_INFO = {
+    aminopyralid: { group: "Group 4 · synthetic auxin", tags: ["Selective: broadleaf", "Systemic", "Post-emergent", "Soil residual"],
+      timing: "Rosette to bolting, or fall regrowth", caution: "Stays active in treated hay, manure and compost; keep it away from susceptible crops and gardens." },
+    triclopyr_24d: { group: "Group 4 · synthetic auxins", tags: ["Selective: broadleaf and woody", "Systemic", "Post-emergent"],
+      timing: "Actively growing weeds and brush in full leaf", caution: "Drift and vapour can injure nearby crops, trees and gardens; avoid hot, windy days." },
+    glyphosate: { group: "Group 9 · EPSP synthase inhibitor", tags: ["Non-selective", "Systemic", "Post-emergent", "No soil activity"],
+      timing: "Actively growing grass, before seed heads form", caution: "Kills desirable grass too, so spot treatment only; use an aquatic formulation near water." },
+    imazapic: { group: "Group 2 · ALS inhibitor", tags: ["Selective: some grasses and broadleaves", "Systemic", "Pre- and post-emergent", "Soil residual"],
+      timing: "Before or soon after weeds emerge", caution: "Soil residual can injure some newly seeded plants; many native warm-season grasses tolerate it." },
+  };
   function readCosts() {
     const n = (id) => Math.max(0, +$(id).value || 0);
     return {
@@ -966,24 +977,36 @@
     if (U.length && !keepView) map.fitBounds(L.featureGroup(planLayer.getLayers()).getBounds().pad(0.05), fitPad());
   }
 
-  // Cost summary at the top of the plan card
-  const COST_PARTS = [["labor", "Crew labor", "#2b3f5d"], ["equip", "Drones and mowers", "#6b86a8"], ["herb", "Herbicide", "#c84113"], ["travel", "Vehicle travel", "#a3acb9"]];
+  // Cost summary at the top of the plan card: total, budget meter, cost tiles, cost by action, drone vs boom truck
+  const COST_PARTS = [["labor", "Crew labor", "#2b3f5d"], ["equip", "Equipment", "#6b86a8"], ["herb", "Herbicide", "#c84113"], ["travel", "Travel", "#a3acb9"]]; // equipment: drones and mowers
+  const ACT_SHORT = { spray: "Drone spray", mow: "Mow", inspect: "Inspect" };
   function renderCost(plan) {
     const C = plan.cost, B = plan.budget, U = plan.units;
     $("planCost").hidden = !U.length && !plan.deferred.length;
-    const pct = (v) => (C.total ? (100 * v) / C.total : 0).toFixed(1) + "%";
+    const share = (v, of) => (of ? Math.min(100, (100 * v) / of) : 0).toFixed(1) + "%";
     const acts = ["spray", "mow", "inspect"].map((a) => { const us = U.filter((u) => u.action === a);
       return { a, n: us.reduce((x, u) => x + u.stops.length, 0), cost: us.reduce((x, u) => x + u.cost.total, 0), ac: us.reduce((x, u) => x + u.stops.reduce((y, s) => y + (s.wk.treated || 0), 0), 0) }; }).filter((r) => r.n);
-    const spray = acts.find((r) => r.a === "spray");
-    let html = '<div class="cost-head"><b>' + money(C.total) + "</b><span>Estimated plan cost" + (B !== null ? " · " + Math.round((100 * C.total) / Math.max(1, B)) + "% of the " + money(B) + " budget" : "") + "</span></div>" +
-      '<div class="cost-bar" role="img" aria-label="Cost breakdown: ' + COST_PARTS.map(([k, l]) => l + " " + money(C[k])).join(", ") + '">' +
-      COST_PARTS.map(([k, , col]) => '<i style="width:' + pct(C[k]) + ";background:" + col + '"></i>').join("") + "</div>" +
-      '<ul class="cost-parts">' + COST_PARTS.map(([k, l, col]) => '<li><i style="background:' + col + '"></i>' + l + "<b>" + money(C[k]) + "</b></li>").join("") + "</ul>" +
-      '<p class="cost-acts">' + acts.map((r) => esc(ACTION[r.a].label) + " " + money(r.cost) + " (" + r.n + " site" + (r.n > 1 ? "s" : "") + ")").join(" · ") +
-      (spray && spray.ac > 0 ? " · " + money(spray.cost / spray.ac) + " per acre sprayed" : "") + "</p>";
-    if (plan.boom) html += '<p class="cost-cmp">Same ' + plan.boom.sites + " spray site" + (plan.boom.sites > 1 ? "s" : "") + " by ground boom truck (broadcast over the whole strip): <b>" + money(plan.boom.cost) + "</b> and " +
-      fmt(plan.boom.product, 1) + " gal of product, against <b>" + money(plan.boom.droneCost) + "</b> and " + fmt(plan.boom.droneProduct, 1) + " gal by drone spot spraying.</p>";
-    if (plan.deferred.length) html += '<p class="cost-def">' + plan.deferred.length + " lower-priority site" + (plan.deferred.length > 1 ? "s are" : " is") + " deferred to stay within the budget (faded on the map).</p>";
+    const spray = acts.find((r) => r.a === "spray"), maxAct = Math.max(1, ...acts.map((r) => r.cost));
+    let html = '<div class="cost-head"><div><b>' + money(C.total) + "</b><span>Estimated plan cost</span></div>" +
+      (spray && spray.ac > 0 ? '<span class="cost-chip">' + money(spray.cost / spray.ac) + "<small>per acre sprayed</small></span>" : "") + "</div>";
+    if (B !== null) html += '<div class="cost-meter" role="img" aria-label="' + Math.round((100 * C.total) / Math.max(1, B)) + '% of the budget used"><i style="width:' + share(C.total, B) + '"></i></div>' +
+      '<p class="cost-meter-l"><span>' + Math.round((100 * C.total) / Math.max(1, B)) + "% of " + money(B) + " budget</span>" +
+      (plan.deferred.length ? '<span class="cost-def">' + plan.deferred.length + " site" + (plan.deferred.length > 1 ? "s" : "") + " deferred</span>" : "") + "</p>";
+    html += '<div class="cost-bar" role="img" aria-label="Cost breakdown: ' + COST_PARTS.map(([k, l]) => l + " " + money(C[k])).join(", ") + '">' +
+      COST_PARTS.map(([k, , col]) => '<i style="width:' + share(C[k], C.total) + ";background:" + col + '"></i>').join("") + "</div>" +
+      '<ul class="cost-tiles">' + COST_PARTS.map(([k, l, col]) => '<li style="--c:' + col + '"><span>' + l + "</span><b>" + money(C[k]) + "</b></li>").join("") + "</ul>" +
+      '<div class="cost-sec"><h5>By action</h5>' + acts.map((r) => '<div class="hbar"><span class="hb-l"><i class="dot a-' + r.a + '"></i>' + ACT_SHORT[r.a] +
+        '</span><span class="hb-t"><i style="width:' + share(r.cost, maxAct) + ";background:var(--a-" + r.a + ')"></i></span><b>' + money(r.cost) + "</b><small>" + r.n + " site" + (r.n > 1 ? "s" : "") + "</small></div>").join("") + "</div>";
+    if (plan.boom) {
+      const bm = plan.boom, maxC = Math.max(bm.cost, bm.droneCost, 1), maxG = Math.max(bm.product, bm.droneProduct, 0.01);
+      const less = (a, b) => (b > 0 ? Math.round(100 * (1 - a / b)) : 0);
+      const pair = (lbl, d, b, max, f) => '<div class="cmp-row"><span class="cmp-l">' + lbl + '</span><div class="cmp-bars"><span class="hb-t"><i class="d" style="width:' + share(d, max) +
+        '"></i></span><b>' + f(d) + '</b><span class="hb-t"><i class="b" style="width:' + share(b, max) + '"></i></span><b>' + f(b) + "</b></div></div>";
+      html += '<div class="cost-sec"><h5>Drone vs boom truck <small>same ' + bm.sites + " spray site" + (bm.sites > 1 ? "s" : "") + "</small></h5>" +
+        '<p class="cmp-key"><span><i class="d"></i>Drone spot spraying</span><span><i class="b"></i>Boom truck, whole strip</span></p>' +
+        pair("Cost", bm.droneCost, bm.cost, maxC, money) + pair("Herbicide", bm.droneProduct, bm.product, maxG, (v) => fmt(v, 1) + " gal") +
+        '<p class="cmp-save"><span>' + less(bm.droneCost, bm.cost) + "% lower cost</span><span>" + less(bm.droneProduct, bm.product) + "% less herbicide</span></p></div>";
+    }
     $("planCost").innerHTML = html;
   }
 
@@ -1305,7 +1328,7 @@
     Object.values(tiles).forEach((t) => map.removeLayer(t)); tiles[r.value].addTo(map);
   }));
 
-  const VIEWS = ["home", "veg", "plan", "drones", "team"];
+  const VIEWS = window.Pages.VIEWS;
   let fitted = false;
   function setView(v) {
     if (!VIEWS.includes(v)) v = "home";
@@ -1314,8 +1337,7 @@
     if (v !== "plan") { $("recCard").hidden = true; stopPlay(); }
     state.view = v;
     renderDepotMarkers();
-    document.querySelectorAll(".navbar a").forEach((a) => (a.dataset.view === v ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
-    document.querySelectorAll("[data-page]").forEach((p) => (p.hidden = p.dataset.page !== v));
+    window.Pages.sync(v);
     const onMap = v === "veg" || v === "plan";
     $("view-map").hidden = !onMap;
     $("panel-veg").hidden = v !== "veg";
@@ -1327,7 +1349,7 @@
       if (!fitted) { fitAllSites(); fitted = true; }
       drawLegend(); renderSites(); drawPlanLayer();
     }
-    document.title = { home: "Roadside Vegetation Portal", veg: "Vegetation Information · Roadside Vegetation", plan: "Operations Planning · Roadside Vegetation", drones: "Drone Technology · Roadside Vegetation", team: "Team · Roadside Vegetation" }[v];
+    document.title = { home: "Roadside Vegetation Portal", veg: "Vegetation Information · Roadside Vegetation", plan: "Operations Planning · Roadside Vegetation", drones: "Drone Technology · Roadside Vegetation", herbicides: "Herbicides · Roadside Vegetation", team: "Team · Roadside Vegetation" }[v];
   }
   window.addEventListener("hashchange", () => setView(location.hash.slice(1)));
 
@@ -1800,6 +1822,23 @@
       syncUS(); job.done();
     } catch (e) { job.set(1, "could not load"); setTimeout(() => job.done(), 2500); }
   }
+
+  /* ----------------------------------------------------- 10a. Resources > Herbicides: one card per product */
+  function renderHerbicides() {
+    const rateTxt = (g) => (g >= 0.25 ? fmt(g * 4, g * 4 % 1 ? 1 : 0) + " qt" : fmt(g * 128, 0) + " fl oz") + " per acre";
+    $("herbCards").innerHTML = Object.entries(D.herbicides).map(([k, h]) => {
+      const info = HERB_INFO[k] || { group: "", tags: [], timing: "", caution: "" }, price = HERB_PRICE[k] || 0;
+      const species = {}; D.sites.forEach((s) => { if (s.herbicide === k) species[s.species] = (species[s.species] || 0) + 1; });
+      const n = Object.values(species).reduce((a, b) => a + b, 0);
+      return '<article class="herb"><header><h3>' + esc(h.name) + '</h3><span class="hgroup">' + esc(info.group) + "</span></header>" +
+        '<ul class="htags">' + info.tags.map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul>" +
+        '<dl class="hstats"><div><dt>Rate</dt><dd>' + rateTxt(h.rate_gal_ac) + "</dd></div><div><dt>Price</dt><dd>" + money(price) + "/gal</dd></div><div><dt>Product cost</dt><dd>" +
+        money(h.rate_gal_ac * price) + "/acre</dd></div></dl>" +
+        '<div class="htargets"><span>Used here for</span>' + Object.keys(species).sort().map((x) => '<i>' + esc(x) + "</i>").join("") + "<b>" + n + " demo sites</b></div>" +
+        '<p class="hrow"><b>Best timing</b>' + esc(info.timing) + '</p><p class="hrow caution"><b>Watch for</b>' + esc(info.caution) + "</p></article>";
+    }).join("");
+  }
+  renderHerbicides();
 
   /* ----------------------------------------------------- 11. photo credits (Home page) */
   $("credits").innerHTML = Object.entries(PHOTOS).map(([k, ph]) =>

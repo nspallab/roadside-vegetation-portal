@@ -34,7 +34,7 @@
     <a href="#home" data-view="home">Home</a>
     <a href="#veg" data-view="veg">Vegetation Information</a>
     <a href="#plan" data-view="plan">Operations Planning</a>
-    <a href="#drones" data-view="drones">Drone Technology</a>
+    <a href="#drones" data-view="drones">Resources</a>
     <a href="#team" data-view="team">Team</a>
   </nav>
 </header>
@@ -97,9 +97,9 @@
             </a>
             <a class="feature" href="#drones" data-view="drones">
               <span class="f-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="5" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="m7 7 3 3m7-3-3 3m-7 7 3-3m7 3-3-3"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg></span>
-              <h3>Drone technology</h3>
-              <p>Spray drones in 3D, specifications and the FAA rules that apply.</p>
-              <span class="f-go">Compare drones <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+              <h3>Drones and herbicides</h3>
+              <p>Spray drones in 3D, their specifications, and the herbicides the planner uses.</p>
+              <span class="f-go">Open resources <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
             </a>
           </div>
         </div>
@@ -366,7 +366,7 @@
     <aside class="detail-card" id="recCard" hidden aria-label="Recommended actions">
       <div class="dc-head"><span id="recTitle">Recommended actions</span><button class="x" id="recClose" type="button" aria-label="Close recommended actions"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button></div>
       <div class="dc-body">
-        <p class="caveat">Each flagged site gets an action from the screening rules: spot spray weeds with a drone, mow turf, tall growth or weeds about to seed, and scout sites that are due for inspection. Change an action to override it; the plan uses your choice. All sites start selected; untick a site to leave it out of the plan.</p>
+        <p class="caveat">Actions come from the screening rules. Untick a site to leave it out, or pick another action.</p>
         <div class="stats s4" id="recSummary" role="group" aria-label="Show sites by action"></div>
         <div class="rec-bar">
           <label><input type="checkbox" id="recAll" checked> <span id="recAllLbl">Select all</span></label>
@@ -397,19 +397,24 @@
     </aside>
   </section>
 
-  <!-- ================= DRONES ================= -->
+  <!-- ================= RESOURCES: two tabs on one page, Drone technology (#drones) and Herbicides (#herbicides) ================= -->
   <section class="page" id="view-drones" data-page="drones" hidden>
     <div class="page-inner">
       <div class="band page-head">
         <div class="wrap">
-          <p class="eyebrow">Task 1.2 · Technology market survey</p>
-          <h1 class="page-h">Drone Technology</h1>
-          <p class="lead">Spraying drone platforms evaluated for roadside vegetation control: payload, coverage rate, power, obstacle sensing, U.S. eligibility and cost. Tank size and rated coverage from this survey feed the planning tool’s refill and working-time estimates.</p>
+          <p class="eyebrow">Task 1 · Technology and herbicide review</p>
+          <h1 class="page-h">Resources</h1>
+          <nav class="subtabs" aria-label="Resources">
+            <a href="#drones" data-sub="drones"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="5" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="m7 7 3 3m7-3-3 3m-7 7 3-3m7 3-3-3"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg>Drone technology</a>
+            <a href="#herbicides" data-sub="herbicides"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 6.4 6 10.8a6 6 0 0 1-12 0C6 9.4 12 3 12 3Z"/><path d="M9.5 14.5a2.6 2.6 0 0 0 2.5 2.5"/></svg>Herbicides</a>
+          </nav>
         </div>
       </div>
 
+      <div class="subpanel" data-sub="drones">
       <div class="band">
         <div class="wrap">
+          <p class="sub-lead">Spray drones from the market survey. Their tank size and coverage feed the planning tool.</p>
           <h2 class="sec-h">Explore in 3D</h2>
           <div class="viewer3d">
             <div class="v3-side">
@@ -450,6 +455,30 @@
           </div>
           <p class="note">Wind is a key constraint: many spraying drones operate safely only below about 6 m/s (13.5 mph), and Midwest winds often exceed that.</p>
         </div>
+      </div>
+      </div>
+
+      <div class="subpanel" data-sub="herbicides" hidden>
+      <div class="band">
+        <div class="wrap">
+          <p class="sub-lead">The herbicides the planning tool uses, how they work, and what to watch for.</p>
+          <h2 class="sec-h">How herbicides differ</h2>
+          <div class="htypes">
+            <div class="htype"><h3>Selective <span>or</span> non-selective</h3><p>Selective products kill target plants and spare others such as grass; non-selective ones kill most plants they touch.</p></div>
+            <div class="htype"><h3>Systemic <span>or</span> contact</h3><p>Systemic products move through the plant to the roots; contact products kill only the tissue they touch.</p></div>
+            <div class="htype"><h3>Post- <span>or</span> pre-emergent</h3><p>Post-emergent products enter the leaves of growing weeds; pre-emergent ones act in the soil before weeds come up.</p></div>
+            <div class="htype"><h3>Persistent <span>or</span> short-lived</h3><p>Persistent products stay active in soil or plant material for weeks to months; others break down quickly.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="band alt">
+        <div class="wrap">
+          <h2 class="sec-h">Herbicides in this portal</h2>
+          <div class="herbs" id="herbCards"><p class="map-load">Loading…</p></div>
+          <p class="note">Rates and prices are illustrative and match the planning tool. Always follow the product label, which must allow aerial (drone) application.</p>
+        </div>
+      </div>
       </div>
     </div>
   </section>
@@ -539,7 +568,7 @@
   </section>
 </main>
 
-<!-- Footer for the reading pages (Home, Drone Technology, Team); js/pages.js adds a copy to each -->
+<!-- Footer for the reading pages (Home, Resources, Team); js/pages.js adds a copy to each -->
 <template id="footTpl">
   <footer class="site-foot">
     <div class="wrap sf-grid">
@@ -552,7 +581,7 @@
         <b>Pages</b>
         <a href="#veg" data-view="veg">Vegetation Information</a>
         <a href="#plan" data-view="plan">Operations Planning</a>
-        <a href="#drones" data-view="drones">Drone Technology</a>
+        <a href="#drones" data-view="drones">Resources</a>
         <a href="#team" data-view="team">Team</a>
       </div>
       <div class="sf-col">

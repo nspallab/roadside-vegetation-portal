@@ -1,5 +1,5 @@
-/* 3D drone viewer on the Drone Technology page.
-   three.js (lib/three) loads only when the page is opened. The models in img/drones/3d are simplified drones built in
+/* 3D drone viewer on the Resources page, Drone technology tab.
+   three.js (lib/three) loads only when the tab is opened. The models in img/drones/3d are simplified drones built in
    Blender to published dimensions by tools/gen_drones_blender.py; each prop_N node spins about its hub (userData.spin = ±1). */
 (function () {
   "use strict";
@@ -144,9 +144,10 @@
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) { $("v3Spin").checked = false; $("v3Auto").checked = false; }
     let last = performance.now();
+    const tab = canvas.closest(".subpanel");
     renderer.setAnimationLoop((now) => {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
-      if ($("view-drones").hidden) return; // page not shown: skip drawing
+      if ($("view-drones").hidden || (tab && tab.hidden)) return; // page or tab not shown: skip drawing
       if ($("v3Spin").checked) props.forEach((p) => (p.rotation.y += (p.userData.spin || 1) * dt * 22));
       controls.autoRotate = $("v3Auto").checked;
       controls.update();
