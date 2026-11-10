@@ -384,7 +384,7 @@
     </aside>
   </section>
 
-  <!-- ================= RESOURCES: two tabs on one page, Drone technology (#drones) and Herbicides (#herbicides) ================= -->
+  <!-- ================= RESOURCES: three tabs on one page, Drone technology (#drones), Herbicides (#herbicides), Rules & regulations (#rules) ================= -->
   <section class="page" id="view-drones" data-page="drones" hidden>
     <div class="page-inner">
       <div class="band page-head">
@@ -393,6 +393,7 @@
           <nav class="subtabs" aria-label="Resources">
             <a href="#drones" data-sub="drones"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="5" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="m7 7 3 3m7-3-3 3m-7 7 3-3m7 3-3-3"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg>Drone technology</a>
             <a href="#herbicides" data-sub="herbicides"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 6.4 6 10.8a6 6 0 0 1-12 0C6 9.4 12 3 12 3Z"/><path d="M9.5 14.5a2.6 2.6 0 0 0 2.5 2.5"/></svg>Herbicides</a>
+            <a href="#rules" data-sub="rules"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="m9 14.5 2 2 4-4.5"/></svg>Rules &amp; regulations</a>
           </nav>
         </div>
       </div>
@@ -430,18 +431,6 @@
           <p class="note">Specifications and list prices as published by each manufacturer; prices vary by configuration and dealer. Product images: Hylio and DJI.</p>
         </div>
       </div>
-
-      <div class="band">
-        <div class="wrap">
-          <h2 class="sec-h">Rules that shape operations</h2>
-          <div class="cards3">
-            <div class="card left"><h3>FAA Part 107</h3><p>Remote pilot certificate for commercial drone flights. Recurrent training every 24 months. Flights below 400 ft and within visual line of sight unless waived.</p></div>
-            <div class="card left"><h3>FAA Part 137</h3><p>Agricultural aircraft operator certificate, required to dispense herbicide from a drone. Spraying drones fly with a pilot and a visual observer, one pilot per drone.</p></div>
-            <div class="card left"><h3>Equipment eligibility</h3><p>NDAA-compliant, U.S.-available platforms are preferred. Foreign-made drones such as DJI are surveyed for comparison in case restrictions change. BVLOS rules (Part 108) are pending.</p></div>
-          </div>
-          <p class="note">Wind is a key constraint: many spraying drones operate safely only below about 6 m/s (13.5 mph), and Midwest winds often exceed that.</p>
-        </div>
-      </div>
       </div>
 
       <div class="subpanel" data-sub="herbicides" hidden>
@@ -462,7 +451,75 @@
         <div class="wrap">
           <h2 class="sec-h">Herbicides in this portal</h2>
           <div class="herbs" id="herbCards"><p class="map-load">Loading…</p></div>
-          <p class="note">Rates and prices are illustrative and match the planning tool. Always follow the product label, which must allow aerial (drone) application.</p>
+          <p class="note">Rates and prices are illustrative and match the planning tool. Always follow the product label; a drone may be used only if the label does not prohibit aerial application. See <a href="#rules">Rules &amp; regulations</a>.</p>
+        </div>
+      </div>
+      </div>
+
+      <div class="subpanel" data-sub="rules" hidden>
+      <div class="band">
+        <div class="wrap">
+          <p class="sub-lead">The federal and Illinois rules a roadside drone spraying program has to meet. Each rule links to its source.</p>
+          <h2 class="sec-h">Flying the drone</h2>
+          <div class="rules">
+            <article class="rule"><span class="rtag">Federal · FAA</span><h3>Part 107: pilot and basic flight rules</h3><p>Drones under 55&nbsp;lb, counting the herbicide on board, fly under Part&nbsp;107. The pilot needs a Remote Pilot Certificate and must finish free online recurrent training every 24 calendar months. Flights stay within visual line of sight, at or below 400&nbsp;ft above ground and 100&nbsp;mph; flights in controlled airspace near airports need FAA authorization.</p><p class="src">Source <a href="#ref-1">[1]</a>, <a href="#ref-2">[2]</a></p></article>
+            <article class="rule"><span class="rtag">Federal · FAA</span><h3>Part 137: agricultural aircraft operator</h3><p>Spraying herbicide from a drone is an agricultural aircraft operation. The operator needs a Part&nbsp;137 Agricultural Aircraft Operator Certificate and an FAA exemption from rules written for crewed aircraft. The FAA asks for the exemption petition at least 120 days before it is needed.</p><p class="src">Source <a href="#ref-3">[3]</a>, <a href="#ref-4">[4]</a></p></article>
+            <article class="rule"><span class="rtag">Federal · FAA</span><h3>Drones of 55&nbsp;lb or more</h3><p>A loaded spray drone often weighs 55&nbsp;lb or more. It then flies under Parts&nbsp;91 and 137 instead of Part&nbsp;107, with exemptions from parts of 14&nbsp;CFR 61, 91 and 137 under 49&nbsp;U.S.C. §44807, and must follow the conditions written into that exemption.</p><p class="src">Source <a href="#ref-3">[3]</a>, <a href="#ref-5">[5]</a></p></article>
+            <article class="rule"><span class="rtag">Federal · FAA</span><h3>Remote ID</h3><p>Drones that must be registered with the FAA have to broadcast Remote ID in flight, either built in or through an add-on broadcast module.</p><p class="src">Source <a href="#ref-6">[6]</a></p></article>
+            <article class="rule"><span class="rtag">Federal · FAA</span><h3>Beyond visual line of sight (Part 108)</h3><p>The FAA proposed Part&nbsp;108 for routine flights beyond visual line of sight in August 2025. As of November 2026 the final rule has not been published. Until it is, such flights need a waiver or exemption.</p><p class="src">Source <a href="#ref-7">[7]</a></p></article>
+          </div>
+          <h2 class="sec-h">Applying the herbicide</h2>
+          <div class="rules">
+            <article class="rule"><span class="rtag">Federal · EPA</span><h3>The label is the law</h3><p>Using a pesticide in a way the label does not allow is a federal violation. Until EPA issues a drone policy, a drone may be used only if the label does not prohibit aerial application, the rate matches the label, and every other direction is followed, including wind, droplet size and buffer limits.</p><p class="src">Source <a href="#ref-8">[8]</a>, <a href="#ref-9">[9]</a></p></article>
+            <article class="rule"><span class="rtag">Illinois</span><h3>Illinois applicator licence</h3><p>Anyone spraying herbicide on roadsides, whether a contractor or a government employee such as a highway department worker, needs an Illinois Commercial Applicator or Operator licence from the Department of Agriculture. Drone applicators take the Aerial General Standards exam plus the Right-of-Way category exam. Licences last 3 years.</p><p class="src">Source <a href="#ref-10">[10]</a>, <a href="#ref-11">[11]</a></p></article>
+            <article class="rule"><span class="rtag">Illinois</span><h3>Spraying near water</h3><p>Herbicide that leaves a residue in waters of the State, such as a stream or a ditch holding water, needs NPDES permit coverage. Illinois EPA's general permit for pesticide discharges covers weed and algae control.</p><p class="src">Source <a href="#ref-12">[12]</a></p></article>
+          </div>
+          <h2 class="sec-h">Buying the drone</h2>
+          <div class="rules">
+            <article class="rule"><span class="rtag">Federal funding</span><h3>Federal funds: American Security Drone Act</h3><p>Since 22 December 2025, FHWA-administered funds cannot buy or operate drones made or assembled by covered foreign entities, such as DJI and Autel. This also covers drone work that supports a federally funded project, and applies to state DOTs and their subrecipients.</p><p class="src">Source <a href="#ref-13">[13]</a>, <a href="#ref-14">[14]</a>, <a href="#ref-16">[16]</a></p></article>
+            <article class="rule"><span class="rtag">Federal · FCC</span><h3>FCC Covered List</h3><p>Since 22 December 2025, new foreign-produced drone models and key components, including DJI and Autel, cannot receive FCC authorization, so they cannot be newly sold in the U.S. Drones bought earlier may still be flown.</p><p class="src">Source <a href="#ref-15">[15]</a></p></article>
+          </div>
+          <p class="note">For this project: the DJI T40 on the Drone technology tab is shown for comparison only. A program paid with federal funds needs a drone from a maker that is not covered; confirm eligibility with the funding agency before buying.</p>
+        </div>
+      </div>
+
+      <div class="band alt">
+        <div class="wrap">
+          <h2 class="sec-h">Before each spraying day</h2>
+          <ul class="checklist">
+            <li>Remote Pilot Certificate current (recurrent training within 24 months) <a href="#ref-1">[1]</a></li>
+            <li>Part 137 certificate and exemption in hand, and their conditions met <a href="#ref-3">[3]</a></li>
+            <li>Drone registered, Remote ID broadcasting <a href="#ref-6">[6]</a></li>
+            <li>FAA authorization for controlled airspace if near an airport <a href="#ref-1">[1]</a></li>
+            <li>Illinois licence covers Right-of-Way work <a href="#ref-10">[10]</a></li>
+            <li>Label allows aerial application; wind, droplet size and buffers within its limits <a href="#ref-9">[9]</a></li>
+            <li>NPDES coverage if herbicide may reach water <a href="#ref-12">[12]</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="band">
+        <div class="wrap">
+          <h2 class="sec-h">References</h2>
+          <ol class="refs">
+            <li id="ref-1">14 CFR Part 107, Small Unmanned Aircraft Systems (incl. §107.31 visual line of sight, §107.41 controlled airspace, §107.51 altitude and speed, §107.65 recurrent training). eCFR. <a href="https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-107" target="_blank" rel="noopener">ecfr.gov</a></li>
+            <li id="ref-2">FAA. Recurrent training courses for drone pilots available online. <a href="https://www.faa.gov/newsroom/recurrent-training-courses-drone-pilots-available-online" target="_blank" rel="noopener">faa.gov</a></li>
+            <li id="ref-3">FAA. Dispensing Chemicals and Agricultural Products (Part 137) with UAS. <a href="https://www.faa.gov/uas/advanced_operations/dispensing_chemicals" target="_blank" rel="noopener">faa.gov</a></li>
+            <li id="ref-4">14 CFR Part 137, Agricultural Aircraft Operations. eCFR. <a href="https://www.ecfr.gov/current/title-14/chapter-I/subchapter-G/part-137" target="_blank" rel="noopener">ecfr.gov</a></li>
+            <li id="ref-5">49 U.S.C. §44807, Special authority for certain unmanned aircraft systems. <a href="https://www.law.cornell.edu/uscode/text/49/44807" target="_blank" rel="noopener">law.cornell.edu</a></li>
+            <li id="ref-6">14 CFR Part 89, Remote Identification of Unmanned Aircraft. eCFR. <a href="https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-89" target="_blank" rel="noopener">ecfr.gov</a></li>
+            <li id="ref-7">FAA. Normalizing Unmanned Aircraft Systems Beyond Visual Line of Sight Operations (proposed rule), 90 FR 38212, 7 Aug 2025. Docket FAA-2025-1908. <a href="https://www.regulations.gov/docket/FAA-2025-1908" target="_blank" rel="noopener">regulations.gov</a></li>
+            <li id="ref-8">7 U.S.C. §136j(a)(2)(G) (FIFRA): unlawful to use a registered pesticide in a manner inconsistent with its labeling. <a href="https://www.law.cornell.edu/uscode/text/7/136j" target="_blank" rel="noopener">law.cornell.edu</a></li>
+            <li id="ref-9">Pesticide Educational Resources Collaborative (PERC). UAS Task Force Recommendations to the PERC Advisory Board, June 2025 (summarises EPA's interim position on drone application). <a href="https://www.pesticideresources.org/wp-content/uploads/2025/06/Final-UAS-Task-Force-Recommendations-to-PERC-Advisory-Board-June-2025.pdf" target="_blank" rel="noopener">pesticideresources.org</a></li>
+            <li id="ref-10">University of Illinois Extension, Pesticide Safety Education Program. Commercial licensing (categories, 3-year licence). <a href="https://extension.illinois.edu/psep/commercial-licensing" target="_blank" rel="noopener">extension.illinois.edu</a></li>
+            <li id="ref-11">University of Illinois Extension, Pesticide Safety Education Program. Special licensing provisions (uncrewed aircraft systems). <a href="https://extension.illinois.edu/psep/special-licensing-provisions" target="_blank" rel="noopener">extension.illinois.edu</a></li>
+            <li id="ref-12">Illinois EPA. General NPDES Permit for Pesticide Point Source Discharges. <a href="https://epa.illinois.gov/topics/forms/water-permits/pesticide.html" target="_blank" rel="noopener">epa.illinois.gov</a></li>
+            <li id="ref-13">FHWA. Policy and Implementation Guidance on Use of FHWA Funds and Activities “In Connection With” Covered Unmanned Aircraft Systems, FHWA-HIF-26-011, 23 Sep 2026. <a href="https://www.fhwa.dot.gov/uas/resources/hif26011.pdf" target="_blank" rel="noopener">fhwa.dot.gov</a></li>
+            <li id="ref-14">American Security Drone Act of 2023: National Defense Authorization Act for FY2024, Pub. L. 118-31, Title XVIII, Subtitle B (§§1821–1833). <a href="https://www.congress.gov/bill/118th-congress/house-bill/2670" target="_blank" rel="noopener">congress.gov</a></li>
+            <li id="ref-15">FCC. List of Equipment and Services Covered by Section 2 of the Secure Networks Act (Covered List); UAS entries added 22 Dec 2025 (Public Notice DA 25-1086). <a href="https://www.fcc.gov/supplychain/coveredlist" target="_blank" rel="noopener">fcc.gov</a></li>
+            <li id="ref-16">University of Illinois Office of Research Security. Federal drone restrictions for university projects. <a href="https://researchsecurity.research.illinois.edu/drones/" target="_blank" rel="noopener">researchsecurity.research.illinois.edu</a></li>
+          </ol>
+          <p class="note">Sources checked 10 November 2026. Rules change; confirm with the source before each season. This page is a summary, not legal advice.</p>
         </div>
       </div>
       </div>

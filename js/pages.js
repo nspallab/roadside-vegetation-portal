@@ -5,8 +5,8 @@
      (it overrides the copy in data/data.js). swath_m (spray passes) and cost_hr (ownership cost per flight hour) are planning assumptions, not spec-sheet values. */
 (function () {
   "use strict";
-  const VIEWS = ["home", "veg", "plan", "drones", "herbicides", "team"];
-  const PAGE = { herbicides: "drones" }; // the Resources page holds two tabs: Drone technology (#drones) and Herbicides (#herbicides)
+  const VIEWS = ["home", "veg", "plan", "drones", "herbicides", "rules", "team"];
+  const PAGE = { herbicides: "drones", rules: "drones" }; // the Resources page holds three tabs: Drone technology (#drones), Herbicides (#herbicides), Rules & regulations (#rules)
   // show the page for view v: nav highlight, page, and the Resources tab
   let last = null;
   function sync(v) {
@@ -26,6 +26,16 @@
     sync(v);
   }
   window.addEventListener("hashchange", show);
+  // reference links ([1] → #ref-1) scroll to the reference without touching the hash, which is the page router
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="#ref-"]');
+    if (!a) return;
+    const t = document.getElementById(a.getAttribute("href").slice(1));
+    if (!t) return;
+    e.preventDefault();
+    t.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+    t.classList.remove("flash"); void t.offsetWidth; t.classList.add("flash");
+  });
   // Home "Demo areas" cards: open the vegetation map with that county chosen (applied by app.js, now or once it loads)
   document.addEventListener("click", (e) => {
     const card = e.target.closest(".region[data-county]");

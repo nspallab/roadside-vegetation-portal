@@ -1349,7 +1349,7 @@
       if (!fitted) { fitAllSites(); fitted = true; }
       drawLegend(); renderSites(); drawPlanLayer();
     }
-    document.title = { home: "Roadside Vegetation Portal", veg: "Vegetation Information · Roadside Vegetation", plan: "Operations Planning · Roadside Vegetation", drones: "Drone Technology · Roadside Vegetation", herbicides: "Herbicides · Roadside Vegetation", team: "Team · Roadside Vegetation" }[v];
+    document.title = { home: "Roadside Vegetation Portal", veg: "Vegetation Information · Roadside Vegetation", plan: "Operations Planning · Roadside Vegetation", drones: "Drone Technology · Roadside Vegetation", herbicides: "Herbicides · Roadside Vegetation", rules: "Rules & Regulations · Roadside Vegetation", team: "Team · Roadside Vegetation" }[v];
   }
   window.addEventListener("hashchange", () => setView(location.hash.slice(1)));
 

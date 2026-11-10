@@ -802,6 +802,26 @@ a.feature:hover .f-go svg { transform: translateX(3px); }
 .htype h3 span { font-family: var(--f-body); font-weight: 400; color: #6b7280; }
 .htype p { margin: 0; font-size: 14px; line-height: 1.55; color: #4b5563; }
 
+/* Rules & regulations tab */
+.rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.rule { display: flex; flex-direction: column; gap: 8px; padding: 18px; border: 1px solid #e3e6eb; border-top: 3px solid var(--navy); border-radius: 12px; background: #fff; }
+.rule h3 { margin: 0; font-family: var(--f-head); font-size: 16.5px; color: var(--navy); text-wrap: balance; }
+.rule p { margin: 0; font-size: 14.5px; line-height: 1.6; color: #4b5563; }
+.rule p.src { margin-top: auto; padding-top: 4px; font-size: 13px; color: #6b7280; }
+.rtag { align-self: flex-start; padding: 2px 10px; border-radius: 999px; background: #eef2f8; color: var(--navy); font-size: 12px; font-weight: 700; letter-spacing: .02em; }
+.rules a[href^="#ref-"], .checklist a { color: var(--orange-ink); font-weight: 600; text-decoration: none; }
+.rules a[href^="#ref-"]:hover, .checklist a:hover { text-decoration: underline; }
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 24px; }
+.checklist li { position: relative; padding-left: 30px; font-size: 15px; line-height: 1.5; color: var(--ink); }
+.checklist li::before { content: ""; position: absolute; left: 0; top: 1px; width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--navy); background: #fff; box-sizing: border-box; }
+.refs { margin: 0; padding-left: 28px; display: grid; gap: 8px; font-size: 14px; line-height: 1.55; color: #4b5563; }
+.refs li { padding: 4px 8px; border-radius: 6px; scroll-margin: 90px; overflow-wrap: anywhere; }
+.refs li a { color: var(--navy); font-weight: 600; }
+.refs li.flash { animation: refFlash 1.6s ease-out; }
+@keyframes refFlash { 0%, 30% { background: #fde9df; } 100% { background: transparent; } }
+@media (max-width: 900px) { .rules { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 620px) { .rules, .checklist { grid-template-columns: 1fr; } }
+
 .herbs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .herb { display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid #e3e6eb; border-radius: 14px; background: #fff; }
 .herb header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; }
