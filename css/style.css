@@ -880,3 +880,15 @@ a.feature:hover .f-go svg { transform: translateX(3px); }
 .rtag-x:hover, .rtag-x:focus-visible { background: #dbe4f0; color: var(--navy); }
 .rtag-clear { border: 0; background: none; padding: 4px 6px; color: var(--orange-ink); font-size: 13px; font-weight: 600; cursor: pointer; }
 .rtag-clear:hover { text-decoration: underline; }
+
+/* Picked sites card (planning > Pick sites) */
+#pickCard .site-list { max-height: none; overflow: visible; }
+.pick-list li { cursor: pointer; overflow: hidden; }
+.pick-list .why { white-space: normal; }
+.pick-tick { width: 18px; height: 18px; margin: 0; flex: none; cursor: pointer; }
+.pick-list .row-x { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #6b7280; font-size: 19px; line-height: 1; cursor: pointer; }
+.pick-list .row-x:hover, .pick-list .row-x:focus-visible { background: #eef1f5; color: var(--navy); }
+.pick-list li.leaving { pointer-events: none; }
+.pick-clear { margin-left: auto; border: 0; background: none; padding: 4px 8px; color: #fff; opacity: .85; font: 600 13px var(--f-body); cursor: pointer; border-radius: 6px; }
+.pick-clear:hover { opacity: 1; background: rgba(255, 255, 255, .12); }
+.pick-clear[hidden] { display: none; }

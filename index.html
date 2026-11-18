@@ -369,6 +369,15 @@
       </div>
     </aside>
 
+    <!-- ---------- Picked sites card (right, planning > Pick sites): each picked site stacks here; untick or × removes it ---------- -->
+    <aside class="detail-card" id="pickCard" hidden aria-label="Picked sites">
+      <div class="dc-head"><span id="pickTitle">Picked sites</span><button class="pick-clear" id="pickClear" type="button">Clear all</button></div>
+      <div class="dc-body">
+        <ol class="site-list pick-list" id="pickList" aria-label="Picked sites"></ol>
+        <p class="hint">Click more sites on the map to add them. Untick or × to remove one.</p>
+      </div>
+    </aside>
+
     <!-- ---------- Site detail popup card ---------- -->
     <!-- ---------- Site list card (right): opened by Visualize; a site opens the detail card in the same place ---------- -->
     <aside class="detail-card" id="listCard" hidden aria-label="Site list">

@@ -22,7 +22,7 @@
   L.control.scale({ position: "bottomright", imperial: true, metric: false }).addTo(map);
   const wide = () => window.innerWidth > 900;
   const panelMin = () => !!document.querySelector(".float-panel.min:not([hidden])");
-  const rightCardOpen = () => ["planOut", "listCard", "drawer", "recCard"].some((id) => !$(id).hidden);
+  const rightCardOpen = () => ["planOut", "listCard", "drawer", "recCard", "pickCard"].some((id) => !$(id).hidden);
   const fitPad = () => (wide() ? { paddingTopLeft: [panelMin() ? 20 : 370, panelMin() ? 70 : 20], paddingBottomRight: [rightCardOpen() ? 430 : 60, 20] } : { padding: [10, 10] });
   // Esri basemaps: no API key needed, and they load when the page is opened straight from a file.
   const esri = (path, opts) => L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/" + path + "/MapServer/tile/{z}/{y}/{x}", Object.assign({ maxZoom: 19, maxNativeZoom: 16 }, opts));
@@ -472,6 +472,7 @@
     renderActivity();
     renderAreas();
     if (state.view === "plan") { renderRecs(); syncPlanReady(); }
+    syncPickCard();
     fillSnapshot();
   }
 
@@ -1473,6 +1474,54 @@
     window.PENDING_COUNTY = null;
     $("locCounty").value = c; $("locCounty").dispatchEvent(new Event("change"));
   };
+
+  // ---- Picked sites card: one row per picked site, newest at the bottom. Removing a row fades it out and the rows
+  //      below move up. Shown only in Pick sites mode, when nothing else (plan, recommendations, site card) is open.
+  const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function pickRow(s) {
+    const li = document.createElement("li");
+    li.dataset.id = s.id;
+    li.innerHTML = '<input type="checkbox" class="pick-tick" checked aria-label="Keep ' + esc(s.route + " " + s.dir + " " + s.label) + ' in the plan">' + shield(s.route) +
+      '<div><div class="sid">' + esc(s.route + " " + s.dir + " · " + s.label) + '</div><div class="why"></div></div>' +
+      '<button type="button" class="row-x" aria-label="Remove ' + esc(s.route + " " + s.dir + " " + s.label) + '" title="Remove">×</button>';
+    return li;
+  }
+  function pickWhy(s) { return STATUS[s._ev.status].label + " · " + (s._rec ? ACTION[s._rec.action].label : "not in the plan"); }
+  function syncPickCard() {
+    const card = $("pickCard"), list = $("pickList");
+    const show = state.view === "plan" && planMode() === "pick" && state.picked.size > 0 &&
+      ["planOut", "recCard", "drawer", "listCard"].every((id) => $(id).hidden);
+    const rows = [...list.children].filter((li) => li.dataset.id);
+    // remove rows no longer picked (fade, then collapse so the rows below move up)
+    rows.filter((li) => !state.picked.has(li.dataset.id) && !li.classList.contains("leaving")).forEach((li) => {
+      li.classList.add("leaving");
+      if (reduceMotion() || card.hidden) { li.remove(); return; }
+      const hgt = li.offsetHeight;
+      li.animate([{ opacity: 1, height: hgt + "px" }, { opacity: 0, height: hgt + "px", offset: 0.55 }, { opacity: 0, height: "0px", paddingTop: "0px", paddingBottom: "0px", borderBottomWidth: "0px" }],
+        { duration: 380, easing: "ease-in-out" }).onfinish = () => li.remove();
+    });
+    // add newly picked sites at the bottom
+    const have = new Set(rows.map((li) => li.dataset.id));
+    let added = null;
+    state.picked.forEach((id) => { if (have.has(id)) return; added = pickRow(byId[id]); list.appendChild(added); if (!reduceMotion() && !card.hidden) added.animate([{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }], { duration: 220, easing: "ease-out" }); });
+    [...list.children].forEach((li) => { const x = byId[li.dataset.id]; if (x && x._ev) li.querySelector(".why").textContent = pickWhy(x); });
+    $("pickTitle").textContent = "Picked sites · " + state.picked.size;
+    $("pickClear").hidden = state.picked.size < 2;
+    card.hidden = !show;
+    if (added && show) added.scrollIntoView({ block: "nearest" });
+  }
+  function unpick(id) { state.picked.delete(id); $("pickCount").textContent = state.picked.size; onPlanAreaChange(); }
+  $("pickList").addEventListener("change", (e) => { const t = e.target.closest(".pick-tick"); if (t && !t.checked) unpick(t.closest("li").dataset.id); });
+  $("pickList").addEventListener("click", (e) => {
+    const li = e.target.closest("li[data-id]"); if (!li) return;
+    if (e.target.closest(".row-x")) { unpick(li.dataset.id); return; }
+    if (e.target.closest("input")) return;
+    const x = byId[li.dataset.id]; map.fitBounds(L.latLngBounds(x.coords).pad(0.6), Object.assign({ maxZoom: 15 }, fitPad())); // show it on the map
+  });
+  $("pickClear").addEventListener("click", () => { state.picked.clear(); $("pickCount").textContent = 0; onPlanAreaChange(); });
+  // other right-hand cards opening or closing decide whether the picked list shows
+  const pickObs = new MutationObserver(() => syncPickCard());
+  ["planOut", "recCard", "drawer", "listCard"].forEach((id) => pickObs.observe($(id), { attributes: true, attributeFilter: ["hidden"] }));
 
   // ---- drawn polygon
   let drawing = false, drawPts = [], drawPoly = null, placingDepot = false;
