@@ -1438,7 +1438,8 @@
   const DATA_COUNTIES = { Champaign: "champaign", Cook: "chicago" }; // counties with vegetation data
   const NA = " — data not available";
   $("psState").innerHTML = STATES.map((x) => '<option value="' + x[0] + '"' + (x[0] === "17" ? " selected" : " disabled") + ">" + x[1] + (x[0] === "17" ? "" : NA) + "</option>").join("");
-  $("psCounty").innerHTML = IL_COUNTIES.map((c) => '<option value="' + c + '"' + (DATA_COUNTIES[c] ? "" : " disabled") + (c === "Champaign" ? " selected" : "") + ">" + c + (DATA_COUNTIES[c] ? "" : NA) + "</option>").join("");
+  $("psCounty").innerHTML = '<option value="" disabled selected hidden>Choose a county…</option>' +
+    IL_COUNTIES.map((c) => '<option value="' + c + '"' + (DATA_COUNTIES[c] ? "" : " disabled") + ">" + c + (DATA_COUNTIES[c] ? "" : NA) + "</option>").join("");
   const planMode = () => document.querySelector('input[name="pMode"]:checked').value;
 
   // ---- Vegetation Information > Location: same rule as planning. Only Illinois and the two counties with
@@ -1572,6 +1573,7 @@
       if (state.planMode === "search" && !chips.length) return { ok: false, mode, msg: "Search and pick at least one route, or choose All routes." };
       if (chips.length) return { ok: true, mode, regions: new Set(D.sites.filter((s) => matchChips(chips, s)).map((s) => s.region)), filter: (s) => matchChips(chips, s) };
       const region = DATA_COUNTIES[$("psCounty").value];
+      if (!$("psCounty").value) return { ok: false, mode, msg: "Choose a county, or Search routes to pick routes." };
       if ($("psState").value !== "17" || !region) return { ok: false, mode, msg: "Vegetation data is available for Champaign and Cook counties only." };
       return { ok: true, mode, regions: new Set([region]), filter: () => true };
     }
@@ -1766,10 +1768,11 @@
     const chips = activeChips("plan");
     if (planTags) planTags.draw();
     const regs = [...new Set(sitesOn(chips).map((s) => COUNTY_OF[s.region]))];
-    $("psRouteNote").textContent = chips.length ? tagSummary(chips) + (regs.length > 1 ? " · " + regs.join(" and ") + " counties" : "") : state.planMode === "search" ? "" : "All routes in " + $("psCounty").value + " County.";
+    $("psRouteNote").textContent = chips.length ? tagSummary(chips) + (regs.length > 1 ? " · " + regs.join(" and ") + " counties" : "") : state.planMode === "search" ? "" : allRoutesNote();
     onPlanAreaChange(true);
   }
-  $("psRouteNote").textContent = "All routes in " + $("psCounty").value + " County.";
+  function allRoutesNote() { return $("psCounty").value ? "All routes in " + $("psCounty").value + " County." : ""; }
+  $("psRouteNote").textContent = allRoutesNote();
   // All routes / Search routes: the search box and tags show only for Search routes (tags are kept if you switch back and forth)
   [["locRMode", "veg", "locRSearch", "locRoute", vegChipsChanged], ["psRMode", "plan", "psRSearch", "psRouteQ", planChipsChanged]].forEach(([name, k, box, input, changed]) =>
     document.querySelectorAll('input[name="' + name + '"]').forEach((r) => r.addEventListener("change", () => {
