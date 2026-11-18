@@ -421,8 +421,9 @@
   }
 
   const state = { view: "veg", selected: null, picked: new Set(), plan: null, focusUnit: null, region: D.regions[0].id, regions: [D.regions[0].id],
-    vegChips: [], planChips: [] }; // route tags picked in the search boxes: { route, region } (region null = every county with data)
+    vegChips: [], planChips: [], vegMode: "all", planMode: "all" }; // route tags picked in the search boxes: { route, region } (region null = every county with data)
   const COUNTY_OF = { champaign: "Champaign", chicago: "Cook" }; // data region id -> county name
+  const activeChips = (k) => (state[k + "Mode"] === "search" ? state[k + "Chips"] : []); // "All routes" ignores the tags
   function matchChips(chips, s) { return chips.some((c) => c.route === s.route && (!c.region || c.region === s.region)); }
   function chipName(c) {
     const regs = c.region ? [c.region] : [...new Set(D.sites.filter((x) => x.route === c.route).map((x) => x.region))];
@@ -434,7 +435,7 @@
   function renderSites() {
     siteLayer.clearLayers();
     const th = thresholds();
-    const chips = state.vegChips, dim = $("thDim").checked;
+    const chips = activeChips("veg"), dim = $("thDim").checked;
     D.sites.forEach((s) => {
       s._ev = evaluate(s, th);
       s._pri = priority(s, s._ev, th);
@@ -489,7 +490,7 @@
   // Right-hand site list: status tiles act as tabs; clicking a site opens its card in the same place
   state.listStatus = "control";
   function renderSummary() {
-    const chips = state.vegChips;
+    const chips = activeChips("veg");
     const pool = D.sites.filter((s) => !chips.length || matchChips(chips, s));
     const n = { control: 0, monitor: 0, good: 0 };
     pool.forEach((s) => n[s._ev.status]++);
@@ -1518,7 +1519,8 @@
   function planSel() {
     const mode = planMode();
     if (mode === "loc") {
-      const chips = state.planChips;
+      const chips = activeChips("plan");
+      if (state.planMode === "search" && !chips.length) return { ok: false, mode, msg: "Search and pick at least one route, or choose All routes." };
       if (chips.length) return { ok: true, mode, regions: new Set(D.sites.filter((s) => matchChips(chips, s)).map((s) => s.region)), filter: (s) => matchChips(chips, s) };
       const region = DATA_COUNTIES[$("psCounty").value];
       if ($("psState").value !== "17" || !region) return { ok: false, mode, msg: "Vegetation data is available for Champaign and Cook counties only." };
@@ -1702,22 +1704,30 @@
     const list = sitesOn(chips), n = new Set(chips.map((c) => c.route)).size;
     return n + " route" + (n === 1 ? "" : "s") + " · " + list.length + " sites";
   };
-  routeTags($("locRoute"), "vegChips", "locChips", () => $("locCounty").value, () => {
-    const chips = state.vegChips;
+  routeTags($("locRoute"), "vegChips", "locChips", () => $("locCounty").value, vegChipsChanged);
+  function vegChipsChanged() {
+    const chips = activeChips("veg");
     renderSites();
-    $("locNote").textContent = chips.length ? tagSummary(chips) : "";
+    $("locNote").textContent = chips.length ? tagSummary(chips) : state.vegMode === "search" ? "Pick one or more routes. Until then, all routes are shown." : "";
     if (chips.length) fitSites(sitesOn(chips)); else if ($("locCounty").value) fitSites(locSites());
     syncFoldSums();
-  });
+  }
   const planTags = routeTags($("psRouteQ"), "planChips", "psChips", () => $("psCounty").value, planChipsChanged);
   function planChipsChanged() {
-    const chips = state.planChips;
+    const chips = activeChips("plan");
     if (planTags) planTags.draw();
     const regs = [...new Set(sitesOn(chips).map((s) => COUNTY_OF[s.region]))];
-    $("psRouteNote").textContent = chips.length ? tagSummary(chips) + (regs.length > 1 ? " · " + regs.join(" and ") + " counties" : "") : "All routes in " + $("psCounty").value + " County.";
+    $("psRouteNote").textContent = chips.length ? tagSummary(chips) + (regs.length > 1 ? " · " + regs.join(" and ") + " counties" : "") : state.planMode === "search" ? "" : "All routes in " + $("psCounty").value + " County.";
     onPlanAreaChange(true);
   }
   $("psRouteNote").textContent = "All routes in " + $("psCounty").value + " County.";
+  // All routes / Search routes: the search box and tags show only for Search routes (tags are kept if you switch back and forth)
+  [["locRMode", "veg", "locRSearch", "locRoute", vegChipsChanged], ["psRMode", "plan", "psRSearch", "psRouteQ", planChipsChanged]].forEach(([name, k, box, input, changed]) =>
+    document.querySelectorAll('input[name="' + name + '"]').forEach((r) => r.addEventListener("change", () => {
+      state[k + "Mode"] = r.value; $(box).hidden = r.value !== "search";
+      changed();
+      if (r.value === "search" && !state[k + "Chips"].length) $(input).focus(); // opens the route suggestions
+    })));
 
   // ---- depots: one row per depot; options are the depots of the selected county (plus any placed on the map)
   state.depotRows = [D.depots.find((d) => d.region === state.regions[0]).id];
@@ -1887,7 +1897,7 @@
 
   /* ---- Collapsible panel sections (data-fold="open|closed"); a folded section shows a one-line summary ---- */
   const FOLD_SUM = {
-    loc: () => "Illinois" + ($("locCounty").value ? " · " + $("locCounty").value + " County" : "") + (state.vegChips.length ? " · " + new Set(state.vegChips.map((c) => c.route)).size + " route(s)" : ""),
+    loc: () => "Illinois" + ($("locCounty").value ? " · " + $("locCounty").value + " County" : "") + (activeChips("veg").length ? " · " + new Set(activeChips("veg").map((c) => c.route)).size + " route(s)" : ""),
     layers: () => { const c = [...$("panel-veg").querySelectorAll('[data-sum="layers"] input[type="checkbox"]')]; return c.filter((x) => x.checked).length + " of " + c.length + " on"; },
     cost: () => (document.querySelector('input[name="pBudgetMode"]:checked').value === "max" ? "Budget " + money(+$("pBudget").value || 0) : "No budget limit") + " · $" + $("cLabor").value + "/h labor",
     ops: () => dayDate($("pDate").value, 1) + " · " + $("pStart").value + " · " + $("pHours").value + " h · wind " + $("pWind").value + " mph",

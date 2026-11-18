@@ -138,14 +138,17 @@
     <aside class="float-panel" id="panel-veg" data-for="veg" aria-label="Vegetation information controls">
       <div class="fp-top"><h2 class="fp-title">Vegetation Information</h2><button class="collapse" type="button" aria-expanded="true" aria-label="Minimize panel" title="Minimize panel"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 12.5 10 7.5 15 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
       <div class="fp-sec" data-fold="closed" data-sum="loc">
-        <h4>Location <i class="info" tabindex="0" role="img" aria-label="Vegetation data is available only for Champaign County and Cook County (Chicago), so other states and counties cannot be chosen yet. Search and pick one or more routes: each becomes a tag below the box, and × removes it. With no route picked, all routes are shown." data-tip="Vegetation data is available only for Champaign County and Cook County (Chicago), so other states and counties cannot be chosen yet. Search and pick one or more routes: each becomes a tag below the box, and × removes it. With no route picked, all routes are shown.">i</i></h4>
+        <h4>Location <i class="info" tabindex="0" role="img" aria-label="Vegetation data is available only for Champaign County and Cook County (Chicago), so other states and counties cannot be chosen yet. Choose All routes, or Search routes and pick one or more. Each picked route becomes a tag; × removes it." data-tip="Vegetation data is available only for Champaign County and Cook County (Chicago), so other states and counties cannot be chosen yet. Choose All routes, or Search routes and pick one or more. Each picked route becomes a tag; × removes it.">i</i></h4>
         <div class="grid2">
           <label class="field"><span>State</span><select id="locState"></select></label>
           <label class="field"><span>County</span><select id="locCounty"></select></label>
         </div>
-        <label class="field"><span>Routes</span>
-          <div class="search-row"><input type="text" id="locRoute" placeholder="Search a route" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off"></div></label>
-        <div class="rtags" id="locChips" hidden></div>
+        <div class="field"><span>Routes</span>
+          <div class="toggle" role="radiogroup" aria-label="Routes"><label><input type="radio" name="locRMode" value="all" checked><span>All routes</span></label><label><input type="radio" name="locRMode" value="search"><span>Search routes</span></label></div></div>
+        <div class="rsearch" id="locRSearch" hidden>
+          <div class="search-row"><input type="text" id="locRoute" placeholder="Search a route" aria-label="Search a route" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off"></div>
+          <div class="rtags" id="locChips" hidden></div>
+        </div>
         <p class="hint" id="locNote"></p>
       </div>
 
@@ -229,9 +232,12 @@
             <label class="field"><span>State</span><select id="psState"></select></label>
             <label class="field"><span>County</span><select id="psCounty"></select></label>
           </div>
-          <label class="field"><span>Routes <i class="info" tabindex="0" role="img" aria-label="Search and pick one or more routes, including routes in another county with data: each becomes a tag below the box, and × removes it. With no route picked, the plan covers all routes in the county." data-tip="Search and pick one or more routes, including routes in another county with data: each becomes a tag below the box, and × removes it. With no route picked, the plan covers all routes in the county.">i</i></span>
-            <div class="search-row"><input type="text" id="psRouteQ" placeholder="Search a route" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off"></div></label>
-          <div class="rtags" id="psChips" hidden></div>
+          <div class="field"><span>Routes <i class="info" tabindex="0" role="img" aria-label="Choose All routes, or Search routes and pick one or more, including routes in another county with data. Each picked route becomes a tag; × removes it." data-tip="Choose All routes, or Search routes and pick one or more, including routes in another county with data. Each picked route becomes a tag; × removes it.">i</i></span>
+            <div class="toggle" role="radiogroup" aria-label="Routes"><label><input type="radio" name="psRMode" value="all" checked><span>All routes</span></label><label><input type="radio" name="psRMode" value="search"><span>Search routes</span></label></div></div>
+          <div class="rsearch" id="psRSearch" hidden>
+            <div class="search-row"><input type="text" id="psRouteQ" placeholder="Search a route" aria-label="Search a route" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off"></div>
+            <div class="rtags" id="psChips" hidden></div>
+          </div>
           <p class="hint" id="psRouteNote"></p>
         </div>
         <div class="pm" id="pmDraw" hidden>

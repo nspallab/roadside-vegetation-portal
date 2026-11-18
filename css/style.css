@@ -869,6 +869,9 @@ a.feature:hover .f-go svg { transform: translateX(3px); }
 .suggest li.none:hover { background: none; }
 
 /* Route tags under the route search box */
+.rsearch { margin: -4px 0 10px; }
+.rsearch[hidden] { display: none; }
+.rsearch .rtags { margin: 8px 0 0; }
 .rtags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -2px 0 8px; }
 .rtags[hidden] { display: none; }
 .rtag-c { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; padding: 3px 3px 3px 10px; border: 1px solid #c9d3e1; border-radius: 8px; background: #eef3f9; color: var(--navy); font-size: 13.5px; font-weight: 600; line-height: 1.3; }
