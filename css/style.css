@@ -352,7 +352,7 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
 @media (prefers-reduced-motion: reduce) { .ring-fg { transition: none; } }
 
 /* ---------------- location search, credits ---------------- */
-.search-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
+.search-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
 .search-row .btn { padding: 7px 12px; }
 .credit-line { margin: 4px 0 0; font-size: 11px; color: var(--muted); }
 .credit-line a { color: var(--navy); }
@@ -867,3 +867,13 @@ a.feature:hover .f-go svg { transform: translateX(3px); }
 .suggest li:hover, .suggest li.on { background: #fff1e6; }
 .suggest li.none { cursor: default; color: var(--muted); font-size: 13px; display: block; }
 .suggest li.none:hover { background: none; }
+
+/* Route tags under the route search box */
+.rtags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -2px 0 8px; }
+.rtags[hidden] { display: none; }
+.rtag-c { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; padding: 3px 3px 3px 10px; border: 1px solid #c9d3e1; border-radius: 8px; background: #eef3f9; color: var(--navy); font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.rtag-c > span { overflow-wrap: anywhere; }
+.rtag-x { display: grid; place-items: center; width: 24px; height: 24px; flex: none; border: 0; border-radius: 6px; background: transparent; color: #4b5563; font-size: 17px; line-height: 1; cursor: pointer; }
+.rtag-x:hover, .rtag-x:focus-visible { background: #dbe4f0; color: var(--navy); }
+.rtag-clear { border: 0; background: none; padding: 4px 6px; color: var(--orange-ink); font-size: 13px; font-weight: 600; cursor: pointer; }
+.rtag-clear:hover { text-decoration: underline; }

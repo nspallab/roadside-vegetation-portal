@@ -420,27 +420,34 @@
     }
   }
 
-  const state = { view: "veg", selected: null, picked: new Set(), plan: null, focusUnit: null, region: D.regions[0].id };
+  const state = { view: "veg", selected: null, picked: new Set(), plan: null, focusUnit: null, region: D.regions[0].id, regions: [D.regions[0].id],
+    vegChips: [], planChips: [] }; // route tags picked in the search boxes: { route, region } (region null = every county with data)
+  const COUNTY_OF = { champaign: "Champaign", chicago: "Cook" }; // data region id -> county name
+  function matchChips(chips, s) { return chips.some((c) => c.route === s.route && (!c.region || c.region === s.region)); }
+  function chipName(c) {
+    const regs = c.region ? [c.region] : [...new Set(D.sites.filter((x) => x.route === c.route).map((x) => x.region))];
+    return c.route + " · " + regs.map((r) => COUNTY_OF[r]).join(", ");
+  }
   const regionOf = (id) => D.regions.find((r) => r.id === id);
   const polyById = {};
 
   function renderSites() {
     siteLayer.clearLayers();
     const th = thresholds();
-    const route = $("thRoute").value, dim = $("thDim").checked;
+    const chips = state.vegChips, dim = $("thDim").checked;
     D.sites.forEach((s) => {
       s._ev = evaluate(s, th);
       s._pri = priority(s, s._ev, th);
       s._auto = recommend(s, s._ev);
       s._rec = applyOverride(s, s._auto);
-      const inRoute = route === "all" || s.route === route;
+      const inRoute = !chips.length || matchChips(chips, s);
       let opacity = 0.95, weight = 6;
       if (state.view === "veg") {
         if (!inRoute) opacity = 0.15;
         if (dim && s._ev.status === "good") opacity = 0.18;
       } else {
         const sel = planSel();
-        if (!s._rec || !sel.ok || s.region !== sel.region) opacity = 0.15, weight = 4;
+        if (!s._rec || !sel.ok || !sel.regions.has(s.region)) opacity = 0.15, weight = 4;
         else if (sel.mode === "pick") opacity = state.picked.has(s.id) ? 1 : 0.35;
         else if (!sel.filter(s)) opacity = 0.25;
         else if (state.plan && state.plan.deferredIds.has(s.id)) opacity = 0.3; // over budget
@@ -482,8 +489,8 @@
   // Right-hand site list: status tiles act as tabs; clicking a site opens its card in the same place
   state.listStatus = "control";
   function renderSummary() {
-    const route = $("thRoute").value;
-    const pool = D.sites.filter((s) => route === "all" || s.route === route);
+    const chips = state.vegChips;
+    const pool = D.sites.filter((s) => !chips.length || matchChips(chips, s));
     const n = { control: 0, monitor: 0, good: 0 };
     pool.forEach((s) => n[s._ev.status]++);
     $("statusSummary").innerHTML = Object.entries(STATUS).map(([k, v]) =>
@@ -491,7 +498,7 @@
     // highest priority first
     const list = pool.filter((s) => s._ev.status === state.listStatus)
       .sort((a, b) => (b._pri.score - a._pri.score) || (b.sight_concern - a.sight_concern) || (b.density_pct - a.density_pct) || a.id.localeCompare(b.id));
-    $("listTitle").textContent = STATUS[state.listStatus].label + " · " + list.length + " site" + (list.length === 1 ? "" : "s") + (route === "all" ? "" : " on " + route);
+    $("listTitle").textContent = STATUS[state.listStatus].label + " · " + list.length + " site" + (list.length === 1 ? "" : "s") + (chips.length ? " on " + [...new Set(chips.map((c) => c.route))].join(", ") : "");
     $("siteList").innerHTML = list.map((s) =>
       '<li data-id="' + s.id + '" tabindex="0">' + shield(s.route) + '<div><div class="sid">' + esc(s.route + " " + s.dir + " · " + s.label) + (s._updated ? ' <span class="new">updated</span>' : "") + "</div><div class=\"why\">" +
       esc(s._ev.reasons.join(" · ")) + "</div></div>" + (s._pri.score ? priBadge(s._pri.score) : "") + '<span class="go" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m8 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></li>').join("") || '<li class="empty">No sites in this group at these limits.</li>';
@@ -524,8 +531,6 @@
   function onSiteClick(s) {
     if (drawing || placingDepot) return; // map click handles drawing / depot placement
     if (state.view === "plan" && planMode() === "pick") {
-      // planning works on one connected area at a time: picking in the other area starts a new pick list
-      if ([...state.picked].some((id) => byId[id].region !== s.region)) state.picked.clear();
       state.picked.has(s.id) ? state.picked.delete(s.id) : state.picked.add(s.id);
       $("pickCount").textContent = state.picked.size;
       onPlanAreaChange();
@@ -808,7 +813,7 @@
 
   function planFor(p, only) {
     const warn = [];
-    const flagged = p.sel.ok ? D.sites.filter((s) => s._rec && p.use[s._rec.action] && s.region === p.sel.region && p.sel.filter(s)) : [];
+    const flagged = p.sel.ok ? D.sites.filter((s) => s._rec && p.use[s._rec.action] && p.sel.regions.has(s.region) && p.sel.filter(s)) : [];
     const pool = only ? flagged.filter((s) => only.has(s.id)) : flagged;
     if (!flagged.length) warn.push("No flagged sites match this area and action selection.");
     if (!p.drone.us) warn.push(p.drone.brand + " " + p.drone.model + " is not currently available in the U.S.; results are for comparison only.");
@@ -823,7 +828,7 @@
       const n = p.units[action];
       if (n === 0) { warn.push(sites.length + " " + ACTION[action].label.toLowerCase() + " site(s) are unassigned: add a crew."); return; }
       // each site goes to its nearest depot; crews are shared out by workload (see docs, Section 6)
-      splitByDepot(sites, p.depots, n, action, p).forEach(({ depot, sites: dsites, n: nd }) => {
+      splitByCounty(sites, n, action, p, warn).forEach(({ depot, sites: dsites, n: nd }) => {
         // nearest-neighbour tour from the depot; optionally sight-distance sites first
         const groups = p.obj === "safety" ? [dsites.filter((s) => s.sight_concern), dsites.filter((s) => !s.sight_concern)] : [dsites];
         const tour = []; let cur = depot.node;
@@ -852,6 +857,28 @@
     });
     const planned = new Set(units.flatMap((u) => u.stops.map((x) => x.site.id)));
     return { p, units, warn, flagged, planned, deferred: [], cost: sumCost(units.map((u) => u.cost)) };
+  }
+
+  // Counties have separate road networks, so a plan over several counties first shares the n crews among
+  // counties by workload (at least one each), then splits each county's sites among its own depots.
+  function splitByCounty(sites, n, action, p, warn) {
+    const what = ACTION[action].label.toLowerCase();
+    let parts = [...new Set(sites.map((s) => s.region))].map((r) => {
+      const ss = sites.filter((s) => s.region === r);
+      return { r, sites: ss, deps: p.depots.filter((d) => d.region === r), load: ss.reduce((a, s) => a + workHours(s, action, p).h, 0) };
+    });
+    parts.filter((x) => !x.deps.length).forEach((x) => warn.push(x.sites.length + " " + what + " site(s) in " + COUNTY_OF[x.r] + " County have no staging area: add one there."));
+    parts = parts.filter((x) => x.deps.length).sort((a, b) => b.load - a.load);
+    if (n < parts.length) {
+      parts.slice(n).forEach((x) => warn.push(x.sites.length + " " + what + " site(s) in " + COUNTY_OF[x.r] + " County are unassigned: add a crew."));
+      parts = parts.slice(0, n);
+    }
+    const alloc = parts.map(() => 1);
+    for (let left = n - parts.length; left > 0; left--) {
+      let bi = 0; parts.forEach((x, i) => { if (x.load / alloc[i] > parts[bi].load / alloc[bi]) bi = i; });
+      alloc[bi]++;
+    }
+    return parts.flatMap((x, i) => splitByDepot(x.sites, x.deps, alloc[i], action, p));
   }
 
   // Assign each site to its nearest depot (road distance), then share n crews among depots by workload.
@@ -1287,7 +1314,7 @@
       "<p>The most serious result sets the status: Act → <b>Needs control</b>, Watch → <b>Monitor</b>, all OK → <b>No action</b>. A site mowed or sprayed in the last <b>" + th.recent + " days</b> is No action.</p>" +
       '<p class="hint">Each site gets exactly one status. The Route filter and Dim option change what is shown, not the status.</p>';
   }
-  ["colorBy", "thDensity", "thHeight", "thAge", "thRoute", "thSight", "thDim"].forEach((id) => $(id).addEventListener("input", () => { syncOutputs(); drawLegend(); renderSites(); }));
+  ["colorBy", "thDensity", "thHeight", "thAge", "thSight", "thDim"].forEach((id) => $(id).addEventListener("input", () => { syncOutputs(); drawLegend(); renderSites(); }));
   $("planClose").addEventListener("click", () => { $("planOut").hidden = true; });
 
   /* ---- GeoJSON export (for ArcGIS / QGIS / DOT GIS systems) ---- */
@@ -1355,16 +1382,15 @@
 
   /* ----------------------------------------------------- 8. regions (demo areas) */
   function fitAllSites() { map.fitBounds(L.latLngBounds(D.sites.map((s) => s.coords[0])).pad(0.08), fitPad()); }
-  function fitRegion() { const r = regionOf(state.region); map.fitBounds(L.latLngBounds(r.bounds).pad(0.06), fitPad()); }
-  function setRegion(id) { // the area the plan works on; resets depots and any old plan
-    if (state.region === id) return;
-    state.region = id; $("drawer").hidden = true; state.selected = null;
+  function setRegions(set) { // the counties the plan works on; keeps their depots, adds one for a new county, drops any old plan
+    const ids = [...set].sort();
+    if (ids.join() === state.regions.join()) return;
+    state.regions = ids; state.region = ids[0]; $("drawer").hidden = true; state.selected = null;
     state.plan = null; state.tl = null; planLayer.clearLayers(); coverLayer.clearLayers(); $("planOut").hidden = true;
-    state.depotRows = [D.depots.find((d) => d.region === id).id];
+    state.depotRows = state.depotRows.filter((id) => ids.includes(D.depots.find((d) => d.id === id).region));
+    ids.forEach((r) => { if (!state.depotRows.some((id) => D.depots.find((d) => d.id === id).region === r)) state.depotRows.push(D.depots.find((d) => d.region === r).id); });
     renderDepotRows();
   }
-  // Route filter lists every route that has vegetation data (all demo areas)
-  $("thRoute").innerHTML = '<option value="all">All routes</option>' + [...new Set(D.sites.map((x) => x.route))].sort().map((x) => "<option>" + x + "</option>").join("");
 
   /* ----------------------------------------------------- 9. find a location (state / county / interstate) */
   const STATES = [["01","Alabama"],["02","Alaska"],["04","Arizona"],["05","Arkansas"],["06","California"],["08","Colorado"],["09","Connecticut"],["10","Delaware"],["11","District of Columbia"],["12","Florida"],["13","Georgia"],["15","Hawaii"],["16","Idaho"],["17","Illinois"],["18","Indiana"],["19","Iowa"],["20","Kansas"],["21","Kentucky"],["22","Louisiana"],["23","Maine"],["24","Maryland"],["25","Massachusetts"],["26","Michigan"],["27","Minnesota"],["28","Mississippi"],["29","Missouri"],["30","Montana"],["31","Nebraska"],["32","Nevada"],["33","New Hampshire"],["34","New Jersey"],["35","New Mexico"],["36","New York"],["37","North Carolina"],["38","North Dakota"],["39","Ohio"],["40","Oklahoma"],["41","Oregon"],["42","Pennsylvania"],["44","Rhode Island"],["45","South Carolina"],["46","South Dakota"],["47","Tennessee"],["48","Texas"],["49","Utah"],["50","Vermont"],["51","Virginia"],["53","Washington"],["54","West Virginia"],["55","Wisconsin"],["56","Wyoming"]];
@@ -1411,12 +1437,6 @@
   const NA = " — data not available";
   $("psState").innerHTML = STATES.map((x) => '<option value="' + x[0] + '"' + (x[0] === "17" ? " selected" : " disabled") + ">" + x[1] + (x[0] === "17" ? "" : NA) + "</option>").join("");
   $("psCounty").innerHTML = IL_COUNTIES.map((c) => '<option value="' + c + '"' + (DATA_COUNTIES[c] ? "" : " disabled") + (c === "Champaign" ? " selected" : "") + ">" + c + (DATA_COUNTIES[c] ? "" : NA) + "</option>").join("");
-  function fillRoutes() {
-    const r = regionOf(DATA_COUNTIES[$("psCounty").value]);
-    $("psRoute").innerHTML = '<option value="all">All routes</option>' + r.routes.map((x) => '<option value="' + x + '">' + x + "</option>").join("");
-    $("psRouteQ").value = ""; $("psRouteNote").textContent = "";
-  }
-  fillRoutes();
   const planMode = () => document.querySelector('input[name="pMode"]:checked').value;
 
   // ---- Vegetation Information > Location: same rule as planning. Only Illinois and the two counties with
@@ -1440,41 +1460,18 @@
     const route = ALL_ROUTES.find((r) => r === (m[1] === "US" ? "US-" : "I-") + m[2] && (m[1] || r.startsWith("I-"))) || ALL_ROUTES.find((r) => r.endsWith("-" + m[2]));
     return route ? { route, county: m[3] ? m[3][0] + m[3].slice(1).toLowerCase() : "" } : null;
   }
-  function goRoute() {
-    const raw = $("locRoute").value.trim(), note = $("locNote");
-    if (!raw) { note.textContent = "Type a route name or number."; return; }
-    const pr = parseRoute(raw);
-    if (!pr) { note.textContent = "No vegetation data for " + raw + ". Routes with data: " + ALL_ROUTES.join(", ") + "."; return; }
-    const route = pr.route;
-    let county = pr.county || $("locCounty").value;
-    let list = D.sites.filter((x) => x.route === route && (!county || x.region === DATA_COUNTIES[county]));
-    if (!list.length) {
-      const asked = county;
-      list = D.sites.filter((x) => x.route === route);
-      const regs = [...new Set(list.map((x) => x.region))];
-      county = regs.length === 1 ? Object.keys(DATA_COUNTIES).find((k) => DATA_COUNTIES[k] === regs[0]) : "";
-      note.textContent = route + " has no vegetation data in " + asked + " County. Showing it in " + (county ? county + " County" : "both counties") + ".";
-    }
-    else note.textContent = "Showing " + route + (county ? " in " + county + " County" : "") + ".";
-    if (!county && $("locCounty").value) $("locCounty").selectedIndex = 0;
-    if (county && $("locCounty").value !== county) $("locCounty").value = county;
-    $("thRoute").value = route; $("thRoute").dispatchEvent(new Event("input"));
-    fitSites(list);
-  }
   $("locCounty").addEventListener("change", () => {
     const c = $("locCounty").value;
     fitSites(locSites());
     showBoundary(1, "GEOID='" + COUNTY_GEOID[c] + "'", "County boundary");
     $("locNote").textContent = "";
   });
-  $("locGo").addEventListener("click", goRoute);
   // County chosen from a Home "Demo areas" card (js/pages.js sets PENDING_COUNTY)
   window.applyPendingCounty = () => {
     const c = window.PENDING_COUNTY; if (!c || !COUNTY_GEOID[c]) return;
     window.PENDING_COUNTY = null;
     $("locCounty").value = c; $("locCounty").dispatchEvent(new Event("change"));
   };
-  $("locRoute").addEventListener("keydown", (e) => { if (e.key === "Enter") goRoute(); });
 
   // ---- drawn polygon
   let drawing = false, drawPts = [], drawPoly = null, placingDepot = false;
@@ -1521,42 +1518,43 @@
   function planSel() {
     const mode = planMode();
     if (mode === "loc") {
-      const region = DATA_COUNTIES[$("psCounty").value], route = $("psRoute").value;
+      const chips = state.planChips;
+      if (chips.length) return { ok: true, mode, regions: new Set(D.sites.filter((s) => matchChips(chips, s)).map((s) => s.region)), filter: (s) => matchChips(chips, s) };
+      const region = DATA_COUNTIES[$("psCounty").value];
       if ($("psState").value !== "17" || !region) return { ok: false, mode, msg: "Vegetation data is available for Champaign and Cook counties only." };
-      return { ok: true, mode, region, filter: (s) => route === "all" || s.route === route };
+      return { ok: true, mode, regions: new Set([region]), filter: () => true };
     }
     if (mode === "draw") {
       if (!drawPoly) return { ok: false, mode, msg: drawing ? "Finish the area to continue." : "Draw an area on the map." };
       const inside = D.sites.filter((s) => inPoly(midOf(s), drawPoly));
       const regions = [...new Set(inside.map((s) => s.region))];
       if (!regions.length) return { ok: false, mode, msg: "No sites with vegetation data inside this area. Data is available in Champaign and Cook counties." };
-      if (regions.length > 1) return { ok: false, mode, msg: "This area covers both Champaign and Cook counties. Draw inside one county." };
       const ids = new Set(inside.map((s) => s.id));
-      return { ok: true, mode, region: regions[0], filter: (s) => ids.has(s.id) };
+      return { ok: true, mode, regions: new Set(regions), filter: (s) => ids.has(s.id) };
     }
     const picked = [...state.picked].map((id) => byId[id]);
     if (!picked.length) return { ok: false, mode, msg: "Pick at least one site on the map." };
-    return { ok: true, mode, region: picked[0].region, filter: (s) => state.picked.has(s.id) };
+    return { ok: true, mode, regions: new Set(picked.map((s) => s.region)), filter: (s) => state.picked.has(s.id) };
   }
   // Generate Plan is enabled only when the selection has flagged sites; rerun after every screening (thresholds, overrides, uploads)
   function syncPlanReady() {
     const sel = planSel();
-    const flagged = sel.ok ? D.sites.filter((s) => s._rec && s.region === sel.region && sel.filter(s)).length : 0;
+    const flagged = sel.ok ? D.sites.filter((s) => s._rec && sel.regions.has(s.region) && sel.filter(s)).length : 0;
     $("pRun").disabled = !sel.ok || !flagged;
     $("pReady").hidden = sel.ok && flagged > 0;
-    const unticked = sel.ok && !flagged && D.sites.some((x) => x._auto && x.region === sel.region && sel.filter(x));
+    const unticked = sel.ok && !flagged && D.sites.some((x) => x._auto && sel.regions.has(x.region) && sel.filter(x));
     $("pReady").textContent = !sel.ok ? sel.msg : flagged ? "" : unticked ? "All sites are unticked. Tick at least one site in Recommended actions." : "No flagged sites in this selection.";
     return { sel, flagged };
   }
   function onPlanAreaChange(fit) {
     const sel = planSel();
     if (state.plan) { state.plan = null; state.tl = null; stopPlay(); planLayer.clearLayers(); coverLayer.clearLayers(); $("planOut").hidden = true; } // selection changed: old plan no longer applies
-    if (sel.ok) setRegion(sel.region);
+    if (sel.ok) setRegions(sel.regions);
     renderSites(); // screens the sites first, so the flagged count below is current
     const { flagged } = syncPlanReady();
     if (sel.mode === "draw" && drawPoly) $("drawNote").textContent = sel.ok ? flagged + " flagged site(s) inside this area." : sel.msg;
     if (fit && sel.ok && sel.mode !== "pick") {
-      const pts = D.sites.filter((s) => s.region === sel.region && sel.filter(s)).flatMap((s) => [s.coords[0], s.coords[s.coords.length - 1]]);
+      const pts = D.sites.filter((s) => sel.regions.has(s.region) && sel.filter(s)).flatMap((s) => [s.coords[0], s.coords[s.coords.length - 1]]);
       if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.08), fitPad());
     }
   }
@@ -1569,7 +1567,7 @@
   let recShown = []; // ids of the rows currently listed (after the tile filter)
   function renderRecs() {
     const sel = planSel();
-    const pool = sel.ok ? D.sites.filter((s) => s._auto && s.region === sel.region && sel.filter(s)) : [];
+    const pool = sel.ok ? D.sites.filter((s) => s._auto && sel.regions.has(s.region) && sel.filter(s)) : [];
     const key = (s) => (s._rec ? s._rec.action : "skip"), n = { spray: 0, mow: 0, inspect: 0, skip: 0 };
     pool.forEach((s) => n[key(s)]++);
     const picked = pool.length - n.skip;
@@ -1630,54 +1628,54 @@
     if (m !== "draw") stopDrawing();
     onPlanAreaChange(m === "loc");
   }));
-  $("psCounty").addEventListener("change", () => { fillRoutes(); onPlanAreaChange(true); });
-  // Route search in the planning panel: empty = all routes in the county; a route in the other county switches county
-  function goPlanRoute() {
-    const raw = $("psRouteQ").value.trim(), note = $("psRouteNote");
-    if (!raw || /^all( routes)?$/i.test(raw)) { $("psRouteQ").value = ""; $("psRoute").value = "all"; note.textContent = "All routes in " + $("psCounty").value + " County."; onPlanAreaChange(true); return; }
-    const pr = parseRoute(raw);
-    if (!pr) { note.textContent = "No vegetation data for " + raw + ". Routes with data: " + ALL_ROUTES.join(", ") + "."; return; }
-    const inCounty = (c) => D.sites.some((x) => x.route === pr.route && x.region === DATA_COUNTIES[c]);
-    let county = pr.county || $("psCounty").value;
-    let msg = "";
-    if (!inCounty(county)) {
-      const other = Object.keys(DATA_COUNTIES).find(inCounty);
-      msg = pr.route + " has no vegetation data in " + county + " County; switched to " + other + " County. ";
-      county = other;
-    }
-    if ($("psCounty").value !== county) { $("psCounty").value = county; fillRoutes(); }
-    $("psRoute").value = pr.route; $("psRouteQ").value = pr.route;
-    note.textContent = msg + "Planning on " + pr.route + " in " + county + " County.";
-    onPlanAreaChange(true);
-  }
-  $("psRouteGo").addEventListener("click", goPlanRoute);
-  $("psRouteQ").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); goPlanRoute(); } });
-
+  $("psCounty").addEventListener("change", () => { state.planChips = []; planChipsChanged(); });
   /* ---- Route suggestions for both search boxes: type any part ("5", "I5", "57", "cook", "US 45")
      and the matching routes with vegetation data appear, each with its county and number of sites. ---- */
   const normQ = (t) => t.toUpperCase().replace(/[\s-]+/g, "").replace(/COUNTY$/, "");
-  const COMBOS = Object.keys(DATA_COUNTIES).flatMap((c) => ALL_ROUTES.map((r) => {
-    const n = D.sites.filter((x) => x.route === r && x.region === DATA_COUNTIES[c]).length;
-    return n ? { route: r, county: c, n, keys: [normQ(r) + normQ(c), normQ(c) + normQ(r)] } : null;
-  }).filter(Boolean)).sort((a, b) => a.route.localeCompare(b.route, undefined, { numeric: true }) || a.county.localeCompare(b.county));
-  function attachSuggest(input, preferCounty, onPick) {
-    const row = input.closest(".search-row"), box = document.createElement("ul");
+  // One entry per route and county with data, plus "all counties" for a route that runs through several of them
+  const COMBOS = ALL_ROUTES.slice().sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).flatMap((r) => {
+    const per = Object.keys(DATA_COUNTIES).map((c) => {
+      const n = D.sites.filter((x) => x.route === r && x.region === DATA_COUNTIES[c]).length;
+      return n ? { route: r, region: DATA_COUNTIES[c], label: c + " County", n, keys: [normQ(r) + normQ(c), normQ(c) + normQ(r)] } : null;
+    }).filter(Boolean);
+    if (per.length < 2) return per;
+    return [{ route: r, region: null, label: "All counties with data (" + per.length + ")", n: per.reduce((a, x) => a + x.n, 0), keys: [normQ(r) + "ALL"] }, ...per];
+  });
+  // Search box with route tags. Picking a suggestion (click or Enter) adds a tag below the box; × removes it.
+  function routeTags(input, chipsKey, boxId, preferCounty, onChange) {
+    const row = input.closest(".search-row"), box = document.createElement("ul"), tags = $(boxId);
     box.className = "suggest"; box.hidden = true; box.setAttribute("role", "listbox"); box.id = input.id + "Sug";
     input.setAttribute("aria-controls", box.id); row.appendChild(box);
     let items = [], active = -1;
+    const chips = () => state[chipsKey];
+    const has = (c) => chips().some((x) => x.route === c.route && (!x.region || x.region === c.region));
     const close = () => { box.hidden = true; active = -1; input.setAttribute("aria-expanded", "false"); };
     function render() {
-      const q = normQ(input.value), pc = preferCounty();
-      items = COMBOS.filter((c) => !q || c.keys.some((k) => k.includes(q)))
-        .sort((a, b) => (b.county === pc) - (a.county === pc)); // the chosen county's routes first
-      if (!items.length) {
-        box.innerHTML = '<li class="none">No route with vegetation data matches. Routes: ' + ALL_ROUTES.join(", ") + "</li>";
-      } else {
-        box.innerHTML = items.map((c, i) => '<li role="option" data-i="' + i + '" class="' + (i === active ? "on" : "") + '"><b>' + c.route + "</b><span>" + c.county + " County · " + c.n + " sites</span></li>").join("");
-      }
+      const q = normQ(input.value), pc = DATA_COUNTIES[preferCounty()];
+      items = COMBOS.filter((c) => !has(c) && (!q || c.keys.some((k) => k.includes(q))))
+        .sort((a, b) => (b.region === pc) - (a.region === pc) || 0);
+      box.innerHTML = items.length ? items.map((c, i) => '<li role="option" data-i="' + i + '" class="' + (i === active ? "on" : "") + '"><b>' + c.route + "</b><span>" + c.label + " · " + c.n + " sites</span></li>").join("")
+        : '<li class="none">' + (q ? "No route with vegetation data matches. Routes: " + ALL_ROUTES.join(", ") : "All routes with data are added.") + "</li>";
       box.hidden = false; input.setAttribute("aria-expanded", "true");
     }
-    function pick(i) { const c = items[i]; if (!c) return; input.value = c.route + " " + c.county; close(); onPick(); }
+    function add(c) {
+      const list = chips();
+      if (!c.region) state[chipsKey] = list.filter((x) => x.route !== c.route); // "all counties" replaces that route's county tags
+      state[chipsKey].push({ route: c.route, region: c.region });
+      input.value = ""; draw(); onChange();
+    }
+    function draw() {
+      const list = chips();
+      tags.innerHTML = list.map((c, i) => '<span class="rtag-c"><span>' + esc(chipName(c)) + '</span><button type="button" class="rtag-x" data-i="' + i + '" aria-label="Remove ' + esc(chipName(c)) + '" title="Remove">×</button></span>').join("") +
+        (list.length > 1 ? '<button type="button" class="rtag-clear">Clear all</button>' : "");
+      tags.hidden = !list.length;
+    }
+    tags.addEventListener("click", (e) => {
+      const x = e.target.closest(".rtag-x"), all = e.target.closest(".rtag-clear");
+      if (!x && !all) return;
+      if (all) state[chipsKey] = []; else state[chipsKey].splice(+x.dataset.i, 1);
+      draw(); onChange(); input.focus();
+    });
     input.addEventListener("input", () => { active = -1; render(); });
     input.addEventListener("focus", render);
     input.addEventListener("keydown", (e) => {
@@ -1685,23 +1683,51 @@
         e.preventDefault(); if (box.hidden) render();
         active = Math.max(0, Math.min(items.length - 1, active + (e.key === "ArrowDown" ? 1 : -1))); render();
         const el = box.querySelector("li.on"); if (el) el.scrollIntoView({ block: "nearest" });
-      } else if (e.key === "Enter" && active >= 0 && !box.hidden) { e.preventDefault(); e.stopImmediatePropagation(); pick(active); }
-      else if (e.key === "Escape") close();
-      else if (e.key === "Enter") close();
-    }, true); // capture: runs before the box's own Enter-to-search handler
-    box.addEventListener("mousedown", (e) => { const li = e.target.closest("li[data-i]"); if (li) { e.preventDefault(); pick(+li.dataset.i); } });
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (active >= 0 && items[active]) { add(items[active]); render(); return; }
+        const raw = input.value.trim(); if (!raw) return;
+        const pr = parseRoute(raw), c = pr && COMBOS.find((x) => x.route === pr.route && (pr.county ? x.region === DATA_COUNTIES[pr.county] : true));
+        if (c && !has(c)) { add(c); close(); } else if (!c) { box.innerHTML = '<li class="none">No vegetation data for ' + esc(raw) + ". Routes with data: " + ALL_ROUTES.join(", ") + "</li>"; box.hidden = false; }
+        else { input.value = ""; close(); }
+      } else if (e.key === "Escape") close();
+      else if (e.key === "Backspace" && !input.value && chips().length) { chips().pop(); draw(); onChange(); }
+    });
+    box.addEventListener("mousedown", (e) => { const li = e.target.closest("li[data-i]"); if (li) { e.preventDefault(); add(items[+li.dataset.i]); render(); } });
     input.addEventListener("blur", () => setTimeout(close, 120));
+    return { draw };
   }
-  attachSuggest($("locRoute"), () => $("locCounty").value, goRoute);
-  attachSuggest($("psRouteQ"), () => $("psCounty").value, goPlanRoute);
+  const sitesOn = (chips) => D.sites.filter((s) => matchChips(chips, s));
+  const tagSummary = (chips) => {
+    const list = sitesOn(chips), n = new Set(chips.map((c) => c.route)).size;
+    return n + " route" + (n === 1 ? "" : "s") + " · " + list.length + " sites";
+  };
+  routeTags($("locRoute"), "vegChips", "locChips", () => $("locCounty").value, () => {
+    const chips = state.vegChips;
+    renderSites();
+    $("locNote").textContent = chips.length ? tagSummary(chips) : "";
+    if (chips.length) fitSites(sitesOn(chips)); else if ($("locCounty").value) fitSites(locSites());
+    syncFoldSums();
+  });
+  const planTags = routeTags($("psRouteQ"), "planChips", "psChips", () => $("psCounty").value, planChipsChanged);
+  function planChipsChanged() {
+    const chips = state.planChips;
+    if (planTags) planTags.draw();
+    const regs = [...new Set(sitesOn(chips).map((s) => COUNTY_OF[s.region]))];
+    $("psRouteNote").textContent = chips.length ? tagSummary(chips) + (regs.length > 1 ? " · " + regs.join(" and ") + " counties" : "") : "All routes in " + $("psCounty").value + " County.";
+    onPlanAreaChange(true);
+  }
+  $("psRouteNote").textContent = "All routes in " + $("psCounty").value + " County.";
 
   // ---- depots: one row per depot; options are the depots of the selected county (plus any placed on the map)
-  state.depotRows = [D.depots.find((d) => d.region === state.region).id];
+  state.depotRows = [D.depots.find((d) => d.region === state.regions[0]).id];
   function renderDepotRows() {
-    const opts = D.depots.filter((d) => d.region === state.region);
+    const opts = D.depots.filter((d) => state.regions.includes(d.region)), many = state.regions.length > 1;
+    const opt = (d, id) => '<option value="' + d.id + '"' + (d.id === id ? " selected" : "") + (d.id !== id && state.depotRows.includes(d.id) ? " disabled" : "") + ">" + esc(d.name) + "</option>";
     $("depotRows").innerHTML = state.depotRows.map((id, i) =>
       '<div class="depot-row"><select data-i="' + i + '" aria-label="Staging area ' + (i + 1) + '">' +
-      opts.map((d) => '<option value="' + d.id + '"' + (d.id === id ? " selected" : "") + (d.id !== id && state.depotRows.includes(d.id) ? " disabled" : "") + ">" + esc(d.name) + "</option>").join("") +
+      (many ? state.regions.map((r) => '<optgroup label="' + COUNTY_OF[r] + ' County">' + opts.filter((d) => d.region === r).map((d) => opt(d, id)).join("") + "</optgroup>").join("")
+        : opts.map((d) => opt(d, id)).join("")) +
       "</select>" + (state.depotRows.length > 1 ? '<button type="button" class="row-x" data-i="' + i + '" aria-label="Remove staging area">×</button>' : "") + "</div>").join("");
     $("depotAdd").disabled = state.depotRows.length >= opts.length;
     renderDepotMarkers();
@@ -1709,8 +1735,8 @@
   $("depotRows").addEventListener("change", (e) => { const sel = e.target.closest("select"); if (!sel) return; state.depotRows[+sel.dataset.i] = sel.value; renderDepotRows(); });
   $("depotRows").addEventListener("click", (e) => { const b = e.target.closest(".row-x"); if (!b) return; state.depotRows.splice(+b.dataset.i, 1); renderDepotRows(); });
   $("depotAdd").addEventListener("click", () => {
-    const next = D.depots.find((d) => d.region === state.region && !state.depotRows.includes(d.id));
-    if (!next) { toast("All staging areas in this county are added. Use Place on map for a new one."); return; }
+    const next = D.depots.find((d) => state.regions.includes(d.region) && !state.depotRows.includes(d.id));
+    if (!next) { toast("All staging areas in the selected county are added. Use Place on map for a new one."); return; }
     state.depotRows.push(next.id); renderDepotRows();
   });
   function stopPlacing() { placingDepot = false; map.getContainer().classList.remove("drawing"); $("depotPlace").textContent = "Place on map"; }
@@ -1718,16 +1744,17 @@
     if (placingDepot) { stopPlacing(); return; }
     if (drawing) finishDraw();
     placingDepot = true; map.getContainer().classList.add("drawing"); $("depotPlace").textContent = "Cancel";
-    toast("Click the map inside the selected county to place a staging area.");
+    toast("Click the map inside " + state.regions.map((r) => COUNTY_OF[r]).join(" or ") + " County to place a staging area.");
   });
   let customN = 0;
   function placeDepot(ll) {
-    const r = regionOf(state.region), b = L.latLngBounds(r.bounds).pad(0.15);
-    if (!b.contains(ll)) { toast("Place the staging area inside " + r.name.split(" (")[0] + "."); return; }
+    const r = state.regions.map(regionOf).find((x) => L.latLngBounds(x.bounds).pad(0.15).contains(ll));
+    if (!r) { toast("Place the staging area inside " + state.regions.map((x) => COUNTY_OF[x]).join(" or ") + " County."); return; }
+    const b = L.latLngBounds(r.bounds).pad(0.15);
     // connect to the nearest road-network node of this area
     let best = -1, bd = Infinity;
     G.nodes.forEach((n, i) => { if (!b.contains(n)) return; const d = map.distance(ll, n); if (d < bd) { bd = d; best = i; } });
-    const d = { id: "S" + ++customN, region: state.region, name: "Custom staging area " + customN, latlng: [ll.lat, ll.lng], node: best, custom: true };
+    const d = { id: "S" + ++customN, region: r.id, name: "Custom staging area " + customN, latlng: [ll.lat, ll.lng], node: best, custom: true };
     D.depots.push(d);
     state.depotRows.push(d.id); renderDepotRows(); stopPlacing();
     toast(d.name + " added. It joins the road network at the nearest road (" + (bd / M_PER_MI).toFixed(1) + " mi).");
@@ -1860,7 +1887,7 @@
 
   /* ---- Collapsible panel sections (data-fold="open|closed"); a folded section shows a one-line summary ---- */
   const FOLD_SUM = {
-    loc: () => "Illinois" + ($("locCounty").value ? " · " + $("locCounty").value + " County" : ""),
+    loc: () => "Illinois" + ($("locCounty").value ? " · " + $("locCounty").value + " County" : "") + (state.vegChips.length ? " · " + new Set(state.vegChips.map((c) => c.route)).size + " route(s)" : ""),
     layers: () => { const c = [...$("panel-veg").querySelectorAll('[data-sum="layers"] input[type="checkbox"]')]; return c.filter((x) => x.checked).length + " of " + c.length + " on"; },
     cost: () => (document.querySelector('input[name="pBudgetMode"]:checked').value === "max" ? "Budget " + money(+$("pBudget").value || 0) : "No budget limit") + " · $" + $("cLabor").value + "/h labor",
     ops: () => dayDate($("pDate").value, 1) + " · " + $("pStart").value + " · " + $("pHours").value + " h · wind " + $("pWind").value + " mph",
